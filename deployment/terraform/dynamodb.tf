@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "propertyservice_table" {
-  name           = "linsoft-revelt-propertyservice-properties-db"
+  name           = "linsoft-revelt-properties"
   billing_mode   = "PROVISIONED"
   read_capacity  = 20
   write_capacity = 20
@@ -17,7 +17,7 @@ resource "aws_dynamodb_table" "propertyservice_table" {
   }
 
   tags = {
-    env        = "dev"
+    env     = "dev"
     service = "propertyservice"
   }
 }
