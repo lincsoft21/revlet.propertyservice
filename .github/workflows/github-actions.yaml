@@ -15,15 +15,19 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
       - name: Terraform Init
+        working-directory: ./deployment/terraform
         id: init
         run: terraform init
       - name: Terraform Validate
+        working-directory: ./deployment/terraform
         id: validate
         run: terraform validate -no-color
       - name: Terraform Plan
+        working-directory: ./deployment/terraform
         id: plan
         run: terraform plan -no-color
       - name: Terraform Apply
+        working-directory: ./deployment/terraform
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve
 
