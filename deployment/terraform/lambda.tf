@@ -11,10 +11,14 @@ resource "aws_lambda_function" "propertyservice_lambda" {
   role          = aws_iam_role.propertyservice_role.arn
   package_type  = "Image"
 
-  image_uri = "ghcr.io/awalford16/linsoft.revlet.propertyservice:latest"
+  image_uri = format("%s@%s", data.aws_ecr_repository.propertyservice_repo.repository_url, data.aws_ecr_image.propertyservice_image.image_digest)
   image_config {
     command = [format("app.%s", local.propertyservice_handlers[count.index])]
   }
 
   runtime = "python3.9"
+
+  depends_on = [
+    aws_dynamodb_table.propertyservice_table
+  ]
 }
