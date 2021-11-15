@@ -16,8 +16,6 @@ resource "aws_lambda_function" "propertyservice_lambda" {
     command = [format("app.%s", local.propertyservice_handlers[count.index])]
   }
 
-  runtime = "python3.9"
-
   depends_on = [
     aws_dynamodb_table.propertyservice_table
   ]
