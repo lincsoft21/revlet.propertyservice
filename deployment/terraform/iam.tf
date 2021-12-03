@@ -34,12 +34,9 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
         "Action" : [
           "dynamodb:BatchGet*",
           "dynamodb:DescribeStream",
-          "dynamodb:DescribeTable",
           "dynamodb:Get*",
-          "dynamodb:Query",
           "dynamodb:Scan",
-          "dynamodb:BatchWrite*",
-          "dynamodb:CreateTable",
+          "dynamodb:Query",
           "dynamodb:Delete*",
           "dynamodb:Update*",
           "dynamodb:PutItem"

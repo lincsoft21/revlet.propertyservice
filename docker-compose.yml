@@ -1,0 +1,6 @@
+linsoft.revlet.propertyservice:
+    build: .
+    ports:
+        - "9000:8080"
+    env_file:
+        - ./.env

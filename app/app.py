@@ -1,30 +1,47 @@
 import boto3
+import uuid
+import json
 
-DYNAMO_DB = boto3.resource("dynamodb")
-PROPERTIES_TABLE = DYNAMO_DB.Table("properties")
+DYNAMO_CLIENT = boto3.client("dynamodb", region_name="eu-west-2")
 
 
-def get_property(event, context):
-    response = PROPERTIES_TABLE.get_item(Item={"PropertyId": event["id"]})
-    if "Item" in response:
-        return response["Item"]
+def get_properties(event, context):
+    if "id" in event:
+        response = DYNAMO_CLIENT.get_item(
+            TableName="linsoft-revlet-properties",
+            Key={"PropertyId": {"S": event["id"]}},
+        )
     else:
-        return {"statusCode": "404", "body": "Not found"}
+        response = DYNAMO_CLIENT.scan(TableName="linsoft-revlet-properties")
+
+    if "Item" in response:
+        return get_lambda_response(200, json.dumps(response["Item"]))
+    elif "Items" in response:
+        return get_lambda_response(200, json.dumps(response["Items"]))
+
+    return get_lambda_response(404, "No property found")
 
 
 def post_property(event, context):
-    print(PROPERTIES_TABLE.table_status)
-
     # Use update_item if record already exists
-    response = PROPERTIES_TABLE.put_item(
+    data = json.loads(event["body"])
+    propertyId = str(uuid.uuid4())
+    DYNAMO_CLIENT.put_item(
+        TableName="linsoft-revlet-properties",
         Item={
-            "PropertyId": event["id"],
-            "Postcode": event["postcode"],
-            "StreetName": event["streetName"],
-        }
+            "PropertyId": {"S": propertyId},
+            "Postcode": {"S": data["postcode"]},
+            "StreetName": {"S": data["streetName"]},
+        },
     )
 
+    return get_lambda_response(200, json.dumps({"propertyId": propertyId}))
+
+
+def get_lambda_response(status=200, data="", isBase64=False, headers={}):
     return {
-        "statusCode": response["ResponseMetadata"]["HTTPStatusCode"],
-        "body": "Proeprty " + event["id"] + " created",
+        "isBase64Encoded": isBase64,
+        "statusCode": status,
+        "headers": headers,
+        "body": data,
     }
