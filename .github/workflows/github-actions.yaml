@@ -1,9 +1,5 @@
 name: propertyservice-deployment
-on:
-  push:
-    branches:
-      - main
-      - ISSUE-3
+on: push
 jobs:
   docker_publish:
     runs-on: ubuntu-latest
