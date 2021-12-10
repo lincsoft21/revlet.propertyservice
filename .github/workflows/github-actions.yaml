@@ -1,12 +1,8 @@
 name: propertyservice-deployment
-on:
-  push:
-    branches:
-      - main
+on: push
 jobs:
   docker_publish:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -23,6 +19,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, tag, and push image to Amazon ECR
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: linsoft.revlet.propertyservice
