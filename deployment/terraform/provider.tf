@@ -12,7 +12,7 @@ terraform {
     organization = "linsoft"
 
     workspaces {
-      name = "linsoft-propertyservice-deployment"
+      name = "revlet-propertyservice-deployment"
     }
   }
 }

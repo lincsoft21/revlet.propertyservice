@@ -2,17 +2,17 @@ import boto3
 import uuid
 import json
 
-DYNAMO_CLIENT = boto3.client("dynamodb", region_name="eu-west-2")
+DYNAMO_CLIENT = boto3.resource("dynamodb", region_name="eu-west-2")
+PROPERTIES_TABLE = DYNAMO_CLIENT.Table("revlet-properties")
 
 
 def get_properties(event, context):
     if "id" in event:
-        response = DYNAMO_CLIENT.get_item(
-            TableName="linsoft-revlet-properties",
-            Key={"PropertyId": {"S": event["id"]}},
+        response = PROPERTIES_TABLE.get_item(
+            Key={"propertyId": event["id"]},
         )
     else:
-        response = DYNAMO_CLIENT.scan(TableName="linsoft-revlet-properties")
+        response = PROPERTIES_TABLE.scan()
 
     if "Item" in response:
         return get_lambda_response(200, json.dumps(response["Item"]))
@@ -26,13 +26,12 @@ def post_property(event, context):
     # Use update_item if record already exists
     data = json.loads(event["body"])
     propertyId = str(uuid.uuid4())
-    DYNAMO_CLIENT.put_item(
-        TableName="linsoft-revlet-properties",
-        Item={
-            "PropertyId": {"S": propertyId},
-            "Postcode": {"S": data["postcode"]},
-            "StreetName": {"S": data["streetName"]},
-        },
+
+    data.update({"propertyId": propertyId})
+    print(data)
+
+    PROPERTIES_TABLE.put_item(
+        Item=data,
     )
 
     return get_lambda_response(200, json.dumps({"propertyId": propertyId}))

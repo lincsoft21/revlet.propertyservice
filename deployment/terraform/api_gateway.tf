@@ -88,18 +88,5 @@ resource "aws_api_gateway_model" "propertyservice_model" {
   description  = "Property API Input Model"
   content_type = "application/json"
 
-  schema = <<EOF
-{
-  "type": "object",
-  "properties": {
-    "postcode": {
-      "type": "string"
-    },
-    "streetName": {
-      "type": "string"
-    }
-  },
-  "title": "PropertyInput"
-}
-EOF
+  schema = file("${path.module}/models/property.json")
 }
