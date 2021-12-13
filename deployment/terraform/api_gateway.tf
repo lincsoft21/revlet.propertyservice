@@ -26,6 +26,38 @@ locals {
         "template" = null
       }
     }
+    update_property_details = {
+      method = "PUT"
+      model = {
+        "application/json" = aws_api_gateway_model.propertyservice_details_model.name
+      }
+      validator = aws_api_gateway_request_validator.propertyservice_model_validator.id
+      params = {
+        "method" = {
+          "method.request.querystring.id" = false
+        },
+        "template" = {
+          "application/json" = jsonencode({
+            "id" = "$input.params('id')"
+          })
+        }
+      }
+    }
+    delete_property = {
+      method    = "DELETE"
+      model     = null
+      validator = null
+      params = {
+        "method" = {
+          "method.request.querystring.id" = true
+        },
+        "template" = {
+          "application/json" = jsonencode({
+            "id" = "$input.params('id')"
+          })
+        }
+      }
+    }
   }
 }
 
@@ -59,6 +91,7 @@ resource "aws_api_gateway_integration" "propertyservice_lambda_integration" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.propertyservice_lambda[each.key].invoke_arn
+  passthrough_behavior    = "WHEN_NO_TEMPLATES"
 
   request_templates = each.value.params.template
 }
@@ -89,4 +122,13 @@ resource "aws_api_gateway_model" "propertyservice_model" {
   content_type = "application/json"
 
   schema = file("${path.module}/models/property.json")
+}
+
+resource "aws_api_gateway_model" "propertyservice_details_model" {
+  rest_api_id  = aws_api_gateway_rest_api.propertyservice_api.id
+  name         = "PropertyDetails"
+  description  = "Property API Details Model"
+  content_type = "application/json"
+
+  schema = file("${path.module}/models/property_details.json")
 }

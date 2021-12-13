@@ -23,6 +23,12 @@
           "type": "boolean"
         }
       }
+    },
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "title": "PropertyInput",
