@@ -16,6 +16,25 @@ Once the container is running, the lambda function call can be simulated with cu
 curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d {}
 ```
 
+### Request Body
+The lambda is configured to respond to an AWS-PROXY API gateway integration meaning the request needs to follow this structure:
+
+```json
+{
+  "queryStringParameters": {
+    "id": "PROPERTY_ID"
+  },
+  "headers": {},
+  "body": "{\"STRINGIFIED\": \"JSON\"}"
+}
+```
+
+When passing this body to the curl request, pass it in as a string:
+
+```
+'{"queryStringParameters": {"id": "PROPERTY_ID"},"headers": {},"body": "{\"STRINGIFIED\": \"JSON\"}"}'
+```
+
 ### Secrets
 The `docker-compose` script relies on a `.env` file which requires the following secrets to be defined:
 
@@ -24,6 +43,9 @@ The `docker-compose` script relies on a `.env` file which requires the following
 
 
 ## Deployments
-- Deployed using GitHub actions
-- Builds and deploys docker image to ECR
-- Runs Terraform to provision lambda functions which pulls ECR images
+This project is deployed using GitHub Actions executing the following stages:
+
+- Publish Docker image to ECR
+- Plan and Apply Terraform
+
+Publishing to ECR and Terraform Apply will only run on master branches.

@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "properties": {
+    "rooms": {
+      "type": "number"
+    },
+    "parking": {
+      "type": "boolean"
+    },
+    "garden": {
+      "type": "boolean"
+    }
+  },
+  "title": "PropertyDetailsInput"
+}
