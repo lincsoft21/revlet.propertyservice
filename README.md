@@ -45,6 +45,7 @@ The `docker-compose` script relies on a `.env` file which requires the following
 ## Deployments
 This project is deployed using GitHub Actions executing the following stages:
 
+- Run unit tests
 - Publish Docker image to ECR
 - Plan and Apply Terraform
 
