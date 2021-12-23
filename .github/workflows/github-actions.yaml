@@ -1,7 +1,50 @@
 name: propertyservice-deployment
 on: push
 jobs:
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Unit Tests
+      run: |
+        export PYTHONPATH="$PYTHONPATH:$(pwd)/app"
+        pip3 install -r requirements.tests.txt 
+        pytest tests/unit
+
+  integration_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    # Docker pull amazon/dynamodb-local and run
+    - name: Docker Pull and Run DynamoDB Local
+      run: |
+        docker pull amazon/dynamodb-local
+        docker run --name test-db -p 8000:8000 -d amazon/dynamodb-local
+
+    - name: Integration Tests
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: eu-west-2
+      run: |
+        export PYTHONPATH="$PYTHONPATH:$(pwd)/app"
+        pip3 install -r requirements.tests.txt 
+        pytest tests/integration
+
+    # Tear down docker image
+    - name: Tear Down Docker Image
+      if: always()
+      run: docker stop test-db
+      
+
   docker_publish:
+    needs: 
+      - integration_tests
+      - unit_tests
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -18,14 +61,21 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to Amazon ECR
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    - name: Build and Tag Docker Image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: linsoft.revlet.propertyservice
         IMAGE_TAG: latest
       run: |
         docker build . -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Push Image to Amazon ECR
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: linsoft.revlet.propertyservice
+        IMAGE_TAG: latest
+      run: |
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   terraform_provision:

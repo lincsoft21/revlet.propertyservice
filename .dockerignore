@@ -1,7 +1,2 @@
-.env
-
-.terraform
-*.hcl
-
 __pycache__/
 .pytest_cache/
