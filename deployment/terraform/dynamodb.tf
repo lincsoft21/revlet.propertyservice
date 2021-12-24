@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "propertyservice_table" {
-  name           = "revlet-properties"
+  name           = format("revlet-%s-properties", var.ENVIRONMENT)
   billing_mode   = "PROVISIONED"
   read_capacity  = 20
   write_capacity = 20
@@ -11,7 +11,7 @@ resource "aws_dynamodb_table" "propertyservice_table" {
   }
 
   tags = {
-    env     = "dev"
+    env     = var.ENVIRONMENT
     service = "propertyservice"
   }
 }

@@ -1,9 +1,10 @@
 locals {
   function_method_map = {
     get_properties = {
-      method    = "GET"
-      model     = null
-      validator = null
+      method     = "GET"
+      model      = null
+      validator  = null
+      authorizer = null
       params = {
         "method" = {
           "method.request.querystring.id" = false
@@ -20,7 +21,8 @@ locals {
       model = {
         "application/json" = aws_api_gateway_model.propertyservice_model.name
       }
-      validator = aws_api_gateway_request_validator.propertyservice_model_validator.id
+      validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
+      authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
       params = {
         "method"   = null,
         "template" = null
@@ -31,7 +33,8 @@ locals {
       model = {
         "application/json" = aws_api_gateway_model.propertyservice_details_model.name
       }
-      validator = aws_api_gateway_request_validator.propertyservice_model_validator.id
+      validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
+      authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
       params = {
         "method" = {
           "method.request.querystring.id" = false
@@ -44,9 +47,10 @@ locals {
       }
     }
     delete_property = {
-      method    = "DELETE"
-      model     = null
-      validator = null
+      method     = "DELETE"
+      model      = null
+      validator  = null
+      authorizer = aws_api_gateway_authorizer.propertyservice_api_admin_authorizer.id
       params = {
         "method" = {
           "method.request.querystring.id" = true
@@ -62,7 +66,7 @@ locals {
 }
 
 resource "aws_api_gateway_rest_api" "propertyservice_api" {
-  name = "propertyservice_api"
+  name = format("propertyservice-%s-api", var.ENVIRONMENT)
 }
 
 resource "aws_api_gateway_resource" "propertyservice_gateway_properties_resource" {
@@ -72,11 +76,14 @@ resource "aws_api_gateway_resource" "propertyservice_gateway_properties_resource
 }
 
 resource "aws_api_gateway_method" "propertyservice_method" {
-  for_each      = local.function_method_map
-  rest_api_id   = aws_api_gateway_rest_api.propertyservice_api.id
-  resource_id   = aws_api_gateway_resource.propertyservice_gateway_properties_resource.id
-  http_method   = each.value.method
-  authorization = "NONE"
+  for_each         = local.function_method_map
+  rest_api_id      = aws_api_gateway_rest_api.propertyservice_api.id
+  resource_id      = aws_api_gateway_resource.propertyservice_gateway_properties_resource.id
+  http_method      = each.value.method
+  api_key_required = true
+
+  authorization = each.value.method == "GET" ? "NONE" : "COGNITO_USER_POOLS"
+  authorizer_id = each.value.authorizer
 
   request_parameters   = each.value.params.method
   request_validator_id = each.value.validator
@@ -109,7 +116,7 @@ resource "aws_lambda_permission" "propertyservice_lambda_permission" {
 
 
 resource "aws_api_gateway_request_validator" "propertyservice_model_validator" {
-  name                        = "propertyservice_validator"
+  name                        = "propertyservice-validator"
   rest_api_id                 = aws_api_gateway_rest_api.propertyservice_api.id
   validate_request_body       = true
   validate_request_parameters = false

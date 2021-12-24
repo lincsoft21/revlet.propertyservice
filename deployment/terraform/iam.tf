@@ -23,7 +23,7 @@ resource "aws_iam_role" "propertyservice_role" {
 }
 
 resource "aws_iam_role_policy" "dynamodb_policy" {
-  name = "propertyservice_policy"
+  name = "propertyservice-policy"
   role = aws_iam_role.propertyservice_role.id
 
   policy = jsonencode({
