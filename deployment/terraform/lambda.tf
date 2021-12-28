@@ -4,7 +4,7 @@ locals {
 
 resource "aws_lambda_function" "propertyservice_lambda" {
   for_each      = toset(local.propertyservice_handlers)
-  function_name = format("propertyservice_%s", each.key)
+  function_name = format("propertyservice-%s-%s", var.ENVIRONMENT, each.key)
   role          = aws_iam_role.propertyservice_role.arn
   package_type  = "Image"
 
