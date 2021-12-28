@@ -4,7 +4,7 @@ import uuid
 import json
 import utils
 
-PROPERTIES_TABLE = "revlet-properties"
+PROPERTIES_TABLE = "revlet-dev-properties"
 DEFAULT_REGION = "eu-west-2"
 
 
@@ -19,7 +19,10 @@ class RevletPropertyService:
 
     def get_properties(self, event, context):
         try:
-            if not "id" in event["queryStringParameters"]:
+            if (
+                not event["queryStringParameters"]
+                or not "id" in event["queryStringParameters"]
+            ):
                 response = self.PROPERTYSERVICE_TABLE.scan()
             else:
                 response = self.PROPERTYSERVICE_TABLE.get_item(
