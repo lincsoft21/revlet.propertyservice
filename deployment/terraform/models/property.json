@@ -10,25 +10,14 @@
     "county": {
       "type": "string"
     },
-    "details": {
-      "type": "object",
-      "properties": {
-        "rooms": {
-          "type": "number"
-        },
-        "parking": {
-          "type": "boolean"
-        },
-        "garden": {
-          "type": "boolean"
-        }
-      }
+    "rooms": {
+      "type": "number"
     },
-    "reviews": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+    "parking": {
+      "type": "boolean"
+    },
+    "garden": {
+      "type": "boolean"
     }
   },
   "title": "PropertyInput",
