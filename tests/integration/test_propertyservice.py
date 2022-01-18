@@ -149,10 +149,6 @@ class TestDeletePropertyService:
         yield
 
     def test_delete_property(self):
-        request_body = utils.get_event_body(
-            {},
-            {"id": TEST_PROPERTY_ID},
-        )
         response = TEST_PROPERTYSERVICE_CLIENT.delete_property(TEST_PROPERTY_ID)
 
         print(response)
@@ -160,10 +156,6 @@ class TestDeletePropertyService:
         assert response["body"] == "Property {} deleted".format(TEST_PROPERTY_ID)
 
     def test_delete_property_with_invalid_id(self):
-        request_body = utils.get_event_body(
-            {},
-            {"id": "1234"},
-        )
         response = TEST_PROPERTYSERVICE_CLIENT.delete_property("1234")
 
         assert response["statusCode"] == 404

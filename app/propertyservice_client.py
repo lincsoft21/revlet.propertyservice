@@ -90,6 +90,7 @@ class RevletPropertyService:
         if len(delete_items["Items"]) == 0:
             return utils.get_lambda_response(404, "Property does not exist")
 
+        delete_process = {"success": True, "messages": []}
         for item in delete_items["Items"]:
             try:
                 self.PROPERTYSERVICE_TABLE.delete_item(
@@ -100,6 +101,12 @@ class RevletPropertyService:
                 )
 
             except ClientError as e:
-                return utils.get_lambda_response(400, e.response["Error"]["Message"])
+                delete_process["success"] = False
+                delete_process["messages"].append(
+                    "ERROR deleting: {}".format(item["dataSelector"])
+                )
+
+        if not delete_process["success"]:
+            return utils.get_lambda_response(400, "\n".join(delete_process["messages"]))
 
         return utils.get_lambda_response(200, "Property {} deleted".format(id))
