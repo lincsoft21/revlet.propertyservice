@@ -49,8 +49,7 @@ class TestGetPropertyService:
         )
 
     def test_get_properties(self):
-        request_body = utils.get_event_body({}, {})
-        response = TEST_PROPERTYSERVICE_CLIENT.get_properties(request_body, {})
+        response = TEST_PROPERTYSERVICE_CLIENT.get_properties()
 
         data = json.loads(response["body"])
         assert response["statusCode"] == 200
@@ -58,26 +57,22 @@ class TestGetPropertyService:
         assert len(data) == 1
 
     def test_get_property_by_id(self):
-        request_body = utils.get_event_body({}, {"id": TEST_PROPERTY_ID})
-        response = TEST_PROPERTYSERVICE_CLIENT.get_properties(request_body, {})
+        response = TEST_PROPERTYSERVICE_CLIENT.get_properties(TEST_PROPERTY_ID)
 
         data = json.loads(response["body"])
         assert response["statusCode"] == 200
         assert data[0]["postcode"] == "1234"
 
     def test_get_property_with_invalid_id(self):
-        request_body = utils.get_event_body({}, {"id": "12345"})
-        response = TEST_PROPERTYSERVICE_CLIENT.get_properties(request_body, {})
+        response = TEST_PROPERTYSERVICE_CLIENT.get_properties("12345")
 
         assert response["statusCode"] == 404
 
 
 class TestPostPropertyService:
     def test_post_property(self):
-        request_body = utils.get_event_body(
-            {"postcode": "1234", "streetName": "1 Test Property"}, {}
-        )
-        response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body, {})
+        request_body = {"postcode": "1234", "streetName": "1 Test Property"}
+        response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
         assert response["statusCode"] == 200
 

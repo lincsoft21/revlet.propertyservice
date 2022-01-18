@@ -18,22 +18,17 @@ class RevletPropertyService:
             self.DYNAMO_CLIENT = client
             self.PROPERTYSERVICE_TABLE = self.DYNAMO_CLIENT.Table(table)
 
-    def get_properties(self, event, context):
+    def get_properties(self, id=None):
         id_defined = False
         try:
-            if (
-                not event["queryStringParameters"]
-                or not "id" in event["queryStringParameters"]
-            ):
+            if id == None:
                 response = self.PROPERTYSERVICE_TABLE.scan(
                     FilterExpression=Attr("dataSelector").begins_with("METADATA#")
                 )
             else:
                 id_defined = True
                 response = self.PROPERTYSERVICE_TABLE.query(
-                    KeyConditionExpression=Key("propertyId").eq(
-                        event["queryStringParameters"]["id"]
-                    )
+                    KeyConditionExpression=Key("propertyId").eq(id)
                 )
         except ClientError as e:
             return utils.get_lambda_response(400, e.response["Error"]["Message"])
@@ -50,17 +45,15 @@ class RevletPropertyService:
             200, json.dumps(response["Items"], default=str)
         )
 
-    def post_property(self, event, context):
-        data = json.loads(event["body"])
-
+    def post_property(self, body):
         # Create ID for property
         propertyId = str(uuid.uuid4())
-        data.update(
+        body.update(
             {"propertyId": propertyId, "dataSelector": "METADATA#{}".format(propertyId)}
         )
 
         self.PROPERTYSERVICE_TABLE.put_item(
-            Item=data,
+            Item=body,
         )
 
         return utils.get_lambda_response(200, json.dumps({"propertyId": propertyId}))
