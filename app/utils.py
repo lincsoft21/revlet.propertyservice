@@ -9,7 +9,11 @@ def validate_property_id(propertyId: str):
     return str(test_uuid) == propertyId
 
 
-def validate_property_postcode(postcode):
+def validate_query_params(params):
+    pass
+
+
+def validate_property_postcode(postcode: str):
     pass
 
 

@@ -1,4 +1,5 @@
 import boto3
+from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 import uuid
 import json
@@ -17,61 +18,59 @@ class RevletPropertyService:
             self.DYNAMO_CLIENT = client
             self.PROPERTYSERVICE_TABLE = self.DYNAMO_CLIENT.Table(table)
 
-    def get_properties(self, event, context):
+    def get_properties(self, id=None):
+        id_defined = False
         try:
-            if (
-                not event["queryStringParameters"]
-                or not "id" in event["queryStringParameters"]
-            ):
-                response = self.PROPERTYSERVICE_TABLE.scan()
+            if id == None:
+                response = self.PROPERTYSERVICE_TABLE.scan(
+                    FilterExpression=Attr("dataSelector").begins_with("METADATA#")
+                )
             else:
-                response = self.PROPERTYSERVICE_TABLE.get_item(
-                    Key={"propertyId": event["queryStringParameters"]["id"]},
+                id_defined = True
+                response = self.PROPERTYSERVICE_TABLE.query(
+                    KeyConditionExpression=Key("propertyId").eq(id)
                 )
         except ClientError as e:
             return utils.get_lambda_response(400, e.response["Error"]["Message"])
 
-        if "Item" in response:
+        if not "Items" in response:
             return utils.get_lambda_response(
-                200, json.dumps(response["Item"], default=str)
-            )
-        elif "Items" in response:
-            return utils.get_lambda_response(
-                200, json.dumps(response["Items"], default=str)
+                400, "An error occurred fetching property data"
             )
 
-        return utils.get_lambda_response(404, "No property found")
+        if len(response["Items"]) == 0 and id_defined:
+            return utils.get_lambda_response(404, "No property found")
 
-    def post_property(self, event, context):
-        data = json.loads(event["body"])
+        return utils.get_lambda_response(
+            200, json.dumps(response["Items"], default=str)
+        )
 
-        # Use update_item if record already exists
+    def post_property(self, body):
+        # Create ID for property
         propertyId = str(uuid.uuid4())
-        data.update({"propertyId": propertyId})
+        body.update(
+            {"propertyId": propertyId, "dataSelector": "METADATA#{}".format(propertyId)}
+        )
 
         self.PROPERTYSERVICE_TABLE.put_item(
-            Item=data,
+            Item=body,
         )
 
         return utils.get_lambda_response(200, json.dumps({"propertyId": propertyId}))
 
-    def update_property_details(self, event, context):
-        data = json.loads(event["body"])
-
-        if not event["queryStringParameters"]:
-            return utils.get_lambda_response(400, "No property specified")
-        else:
-            if not "id" in event["queryStringParameters"]:
-                return utils.get_lambda_response(400, "No property specified")
-
+    def update_property_details(self, id, body):
         try:
             response = self.PROPERTYSERVICE_TABLE.update_item(
-                Key={"propertyId": event["queryStringParameters"]["id"]},
-                UpdateExpression="set details.rooms=:r, details.parking=:p, details.garden=:g",
+                Key={
+                    "propertyId": id,
+                    "dataSelector": "METADATA#{}".format(id),
+                },
+                ConditionExpression="attribute_exists(propertyId)",
+                UpdateExpression="set rooms=:r, parking=:p, garden=:g",
                 ExpressionAttributeValues={
-                    ":r": int(data["rooms"]),
-                    ":p": bool(data["parking"]),
-                    ":g": bool(data["garden"]),
+                    ":r": int(body["rooms"]),
+                    ":p": bool(body["parking"]),
+                    ":g": bool(body["garden"]),
                 },
                 ReturnValues="UPDATED_NEW",
             )
@@ -82,26 +81,32 @@ class RevletPropertyService:
             200, json.dumps(response["Attributes"], default=str)
         )
 
-    def delete_property(self, event, context):
-        if not event["queryStringParameters"]:
-            return utils.get_lambda_response(400, "No property specified")
-        else:
-            if not "id" in event["queryStringParameters"]:
-                return utils.get_lambda_response(400, "No property specified")
+    def delete_property(self, id):
+        # Delete all items under property (reviews and metadata)
+        delete_items = self.PROPERTYSERVICE_TABLE.query(
+            KeyConditionExpression=Key("propertyId").eq(id)
+        )
 
-        try:
-            delete_response = self.PROPERTYSERVICE_TABLE.delete_item(
-                Key={"propertyId": event["queryStringParameters"]["id"]},
-                ReturnValues="ALL_OLD",
-            )
-        except ClientError as e:
-            return utils.get_lambda_response(400, e.response["Error"]["Message"])
-
-        # Validate that a property has been deleted
-        if not "Attributes" in delete_response:
+        if len(delete_items["Items"]) == 0:
             return utils.get_lambda_response(404, "Property does not exist")
 
-        print(delete_response)
-        return utils.get_lambda_response(
-            200, "Property {} deleted".format(event["queryStringParameters"]["id"])
-        )
+        delete_process = {"success": True, "messages": []}
+        for item in delete_items["Items"]:
+            try:
+                self.PROPERTYSERVICE_TABLE.delete_item(
+                    Key={
+                        "propertyId": item["propertyId"],
+                        "dataSelector": item["dataSelector"],
+                    },
+                )
+
+            except ClientError as e:
+                delete_process["success"] = False
+                delete_process["messages"].append(
+                    "ERROR deleting: {}".format(item["dataSelector"])
+                )
+
+        if not delete_process["success"]:
+            return utils.get_lambda_response(400, "\n".join(delete_process["messages"]))
+
+        return utils.get_lambda_response(200, "Property {} deleted".format(id))

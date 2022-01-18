@@ -50,3 +50,31 @@ This project is deployed using GitHub Actions executing the following stages:
 - Plan and Apply Terraform
 
 Publishing to ECR and Terraform Apply will only run on master branches.
+
+
+## Tests
+Tests are run using `pytest`. All tests will be run as part of the CICD but can also be run locally. 
+
+### Integration Tests
+The integration tests require a local instance of DynamoDB to be running. This can be done using docker:
+
+```
+docker pull amazon/dynamodb-local
+docker run amazon/dyamodb-local -p 8000:8000
+```
+
+With the local DB running, run the following command:
+
+```
+pytest ./tests/integration
+```
+
+
+## The Database
+The property service is responsible for providing 2 main sets of data for Revlet; property data and review data. There is a 1 to many relationship between properties and reviews. 
+
+Initially the plan was to have a separate service responsible for managing review data, however this would involve more database calls and higher hosting costs. DynamoDB also soesnt support JOIN functionality, meaning retrieving all the reviews for a specific property gets a little more complicated.
+
+Instead, reviews are included within the property service database using a [Composite Primary Key](https://www.alexdebrie.com/posts/dynamodb-one-to-many/#composite-primary-key--the-query-api-action) structure. The database includes 2 keys; 1 for the property ID and 1 defining the type of data being returned from the request (metadata or review). This allows the database to be structured in first normal form and reduce data duolication.
+
+This leverages DynamoDBs concept of item collections where items can share the same key but then identified by a composite key. All items with the same partition key will be stored together.
