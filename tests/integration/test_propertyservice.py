@@ -103,8 +103,43 @@ class TestPostPropertyService:
         assert test_property["Item"]["postcode"] == "1234"
         assert test_property["Item"]["streetName"] == "1 Test Property"
 
+    # It should allow creation of property with same postcode
+    def test_post_property_with_same_postcode(self):
+        request_body = {
+            "postcode": TEST_PROPERTY_POSTCODE,
+            "streetName": "2 Test Property",
+        }
+        response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
+
+        assert response["statusCode"] == 200
+
+        # Validate property creation
+        test_property = utils.get_test_data(
+            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE,
+            request_body["postcode"],
+            request_body["streetName"],
+        )
+        assert test_property["Item"]["postcode"] == TEST_PROPERTY_POSTCODE
+        assert test_property["Item"]["streetName"] == "2 Test Property"
+
+    # It should allow the same street with a different postcode
+    def test_post_property_with_same_street(self):
+        request_body = {"postcode": "YZ9 10BA", "streetName": TEST_PROPERTY_STREET_NAME}
+        response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
+
+        assert response["statusCode"] == 200
+
+        # Validate property creation
+        test_property = utils.get_test_data(
+            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE,
+            request_body["postcode"],
+            request_body["streetName"],
+        )
+        assert test_property["Item"]["postcode"] == "YZ9 10BA"
+        assert test_property["Item"]["streetName"] == TEST_PROPERTY_STREET_NAME
+
     # It should not allow the same property to be added twice
-    def test_duplicate_property(self):
+    def test_post_property_with_same_details(self):
         request_body = {
             "postcode": TEST_PROPERTY_POSTCODE,
             "streetName": TEST_PROPERTY_STREET_NAME,
