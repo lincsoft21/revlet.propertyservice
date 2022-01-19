@@ -3,11 +3,11 @@ resource "aws_dynamodb_table" "propertyservice_table" {
   billing_mode   = "PROVISIONED"
   read_capacity  = 20
   write_capacity = 20
-  hash_key       = "postcode"
+  hash_key       = "propertyId"
   range_key      = "dataSelector"
 
   attribute {
-    name = "postcode"
+    name = "propertyId"
     type = "S"
   }
 
