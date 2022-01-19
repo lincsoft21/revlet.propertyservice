@@ -1,5 +1,4 @@
 import json
-import os
 from uuid import uuid4
 import boto3
 import pytest
@@ -15,7 +14,9 @@ ddb = boto3.resource(
 
 TEST_TABLE_NAME = "propertyservice-test-table"
 TEST_PROPERTYSERVICE_CLIENT = RevletPropertyService(ddb, TEST_TABLE_NAME)
-TEST_PROPERTY_ID = str(uuid4())
+
+TEST_PROPERTY_POSTCODE = "AB1 2CD"
+TEST_PROPERTY_STREET_NAME = "123 Steet"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -41,11 +42,13 @@ class TestGetPropertyService:
     def setupClass(self, setup):
         #  Creates the test table to be used in tests.
         utils.add_test_data(
-            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE, TEST_PROPERTY_ID
+            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE, TEST_PROPERTY_POSTCODE
         )
         yield
         utils.delete_test_data(
-            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE, TEST_PROPERTY_ID
+            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTY_POSTCODE,
+            TEST_PROPERTY_STREET_NAME,
         )
 
     def test_get_properties(self):
@@ -53,15 +56,15 @@ class TestGetPropertyService:
 
         data = json.loads(response["body"])
         assert response["statusCode"] == 200
-        assert data[0]["postcode"] == "1234"
+        assert data[0]["postcode"] == TEST_PROPERTY_POSTCODE
         assert len(data) == 1
 
     def test_get_property_by_id(self):
-        response = TEST_PROPERTYSERVICE_CLIENT.get_properties(TEST_PROPERTY_ID)
+        response = TEST_PROPERTYSERVICE_CLIENT.get_properties(TEST_PROPERTY_POSTCODE)
 
         data = json.loads(response["body"])
         assert response["statusCode"] == 200
-        assert data[0]["postcode"] == "1234"
+        assert data[0]["postcode"] == TEST_PROPERTY_POSTCODE
 
     def test_get_property_with_invalid_id(self):
         response = TEST_PROPERTYSERVICE_CLIENT.get_properties("12345")
@@ -70,19 +73,46 @@ class TestGetPropertyService:
 
 
 class TestPostPropertyService:
+    @pytest.fixture(scope="class", autouse=True)
+    def setupClass(self, setup):
+        #  Creates the test table to be used in tests.
+        utils.add_test_data(
+            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTY_POSTCODE,
+            TEST_PROPERTY_STREET_NAME,
+        )
+        yield
+        utils.delete_test_data(
+            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTY_POSTCODE,
+            TEST_PROPERTY_STREET_NAME,
+        )
+
     def test_post_property(self):
         request_body = {"postcode": "1234", "streetName": "1 Test Property"}
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
+        print(response)
         assert response["statusCode"] == 200
 
         # Validate property creation
-        data = json.loads(response["body"])
         test_property = utils.get_test_data(
-            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE, data["propertyId"]
+            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE,
+            request_body["postcode"],
+            request_body["streetName"],
         )
         assert test_property["Item"]["postcode"] == "1234"
         assert test_property["Item"]["streetName"] == "1 Test Property"
+
+    # It should not allow the same property to be added twice
+    def test_duplicate_property(self):
+        request_body = {
+            "postcode": TEST_PROPERTY_POSTCODE,
+            "streetName": TEST_PROPERTY_STREET_NAME,
+        }
+        response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
+
+        assert response["statusCode"] == 400
 
 
 class TestPutPropertyService:
@@ -90,17 +120,21 @@ class TestPutPropertyService:
     def setupClass(self, setup):
         #  Creates the test table to be used in tests.
         utils.add_test_data(
-            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE, TEST_PROPERTY_ID
+            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTY_POSTCODE,
+            TEST_PROPERTY_STREET_NAME,
         )
         yield
         utils.delete_test_data(
-            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE, TEST_PROPERTY_ID
+            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTY_POSTCODE,
+            TEST_PROPERTY_STREET_NAME,
         )
 
     def test_put_property(self):
         request_body = {"rooms": 4, "parking": True, "garden": False}
         response = TEST_PROPERTYSERVICE_CLIENT.update_property_details(
-            TEST_PROPERTY_ID, request_body
+            TEST_PROPERTY_POSTCODE, TEST_PROPERTY_STREET_NAME, request_body
         )
 
         data = json.loads(response["body"])
@@ -111,51 +145,59 @@ class TestPutPropertyService:
     # Should return 400 if the details body is invalid
 
     # It should return 404 if the property does not exist
-    def test_put_property_with_invalid_id(self):
+    def test_put_property_with_invalid_postcode(self):
         all_items = TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE.scan()
         print(all_items["Items"])
 
         request_body = {"rooms": 4, "parking": True, "garden": False}
         response = TEST_PROPERTYSERVICE_CLIENT.update_property_details(
-            "5678", request_body
+            "5678", TEST_PROPERTY_STREET_NAME, request_body
         )
 
+        assert response["statusCode"] == 400
+
+    def test_put_property_with_invalid_street(self):
         all_items = TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE.scan()
         print(all_items["Items"])
 
-        print(response)
+        request_body = {"rooms": 4, "parking": True, "garden": False}
+        response = TEST_PROPERTYSERVICE_CLIENT.update_property_details(
+            TEST_PROPERTY_POSTCODE, "Wrong Street", request_body
+        )
+
         assert response["statusCode"] == 400
 
 
 class TestDeletePropertyService:
     @pytest.fixture(scope="class", autouse=True)
     def setupClass(self, setup):
-        test_review_data = {
-            "propertyId": TEST_PROPERTY_ID,
-            "dataSelector": "REVIEW#1234-5678",
-            "title": "Test Review",
-        }
         #  Creates the test table to be used in tests.
         utils.add_test_data(
-            TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE, TEST_PROPERTY_ID
-        )
-
-        # Add Review data to be removed with property
-        utils.add_test_data(
             TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE,
-            TEST_PROPERTY_ID,
-            test_review_data,
+            TEST_PROPERTY_POSTCODE,
+            TEST_PROPERTY_STREET_NAME,
         )
         yield
 
     def test_delete_property(self):
-        response = TEST_PROPERTYSERVICE_CLIENT.delete_property(TEST_PROPERTY_ID)
+        response = TEST_PROPERTYSERVICE_CLIENT.delete_property(
+            TEST_PROPERTY_POSTCODE, TEST_PROPERTY_STREET_NAME
+        )
 
         print(response)
         assert response["statusCode"] == 200
-        assert response["body"] == "Property {} deleted".format(TEST_PROPERTY_ID)
+        assert response["body"]["streetName"] == TEST_PROPERTY_STREET_NAME
 
-    def test_delete_property_with_invalid_id(self):
-        response = TEST_PROPERTYSERVICE_CLIENT.delete_property("1234")
+    def test_delete_property_with_invalid_postcode(self):
+        response = TEST_PROPERTYSERVICE_CLIENT.delete_property(
+            "1234", TEST_PROPERTY_STREET_NAME
+        )
 
-        assert response["statusCode"] == 404
+        assert response["statusCode"] == 400
+
+    def test_delete_property_with_invalid_STREET_NAME(self):
+        response = TEST_PROPERTYSERVICE_CLIENT.delete_property(
+            TEST_PROPERTY_POSTCODE, "Wrong Street"
+        )
+
+        assert response["statusCode"] == 400
