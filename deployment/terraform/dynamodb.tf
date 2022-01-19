@@ -33,7 +33,7 @@ resource "aws_dynamodb_table" "propertyservice_table" {
     write_capacity     = 20
     read_capacity      = 20
     projection_type    = "INCLUDE"
-    non_key_attributes = []
+    non_key_attributes = ["postcode", "streetName"]
   }
 
   tags = {
