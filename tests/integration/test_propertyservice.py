@@ -92,7 +92,6 @@ class TestPostPropertyService:
         request_body = {"postcode": "1234", "streetName": "1 Test Property"}
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
-        print(response)
         assert response["statusCode"] == 200
 
         # Validate property creation
@@ -146,9 +145,6 @@ class TestPutPropertyService:
 
     # It should return 404 if the property does not exist
     def test_put_property_with_invalid_postcode(self):
-        all_items = TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE.scan()
-        print(all_items["Items"])
-
         request_body = {"rooms": 4, "parking": True, "garden": False}
         response = TEST_PROPERTYSERVICE_CLIENT.update_property_details(
             "5678", TEST_PROPERTY_STREET_NAME, request_body
@@ -157,9 +153,6 @@ class TestPutPropertyService:
         assert response["statusCode"] == 400
 
     def test_put_property_with_invalid_street(self):
-        all_items = TEST_PROPERTYSERVICE_CLIENT.PROPERTYSERVICE_TABLE.scan()
-        print(all_items["Items"])
-
         request_body = {"rooms": 4, "parking": True, "garden": False}
         response = TEST_PROPERTYSERVICE_CLIENT.update_property_details(
             TEST_PROPERTY_POSTCODE, "Wrong Street", request_body
@@ -184,7 +177,6 @@ class TestDeletePropertyService:
             TEST_PROPERTY_POSTCODE, TEST_PROPERTY_STREET_NAME
         )
 
-        print(response)
         assert response["statusCode"] == 200
         assert response["body"]["streetName"] == TEST_PROPERTY_STREET_NAME
 
