@@ -25,9 +25,8 @@ def update_property_details(event, context):
     if not event["queryStringParameters"]:
         return utils.get_lambda_response(400, "Invalid request")
     else:
-        if (
-            (not "p" in event["queryStringParameters"])
-            or (not "s" in event["queryStringParameters"])
+        if (not "p" in event["queryStringParameters"]) or (
+            not "s" in event["queryStringParameters"]
         ):
             return utils.get_lambda_response(400, "Request missing property details")
 
@@ -40,9 +39,8 @@ def delete_property(event, context):
     if not event["queryStringParameters"]:
         return utils.get_lambda_response(400, "No property specified")
     else:
-        if (
-            not "p" in event["queryStringParameters"]
-            or "s" in event["queryStringParameters"]
+        if (not "p" in event["queryStringParameters"]) or (
+            not "s" in event["queryStringParameters"]
         ):
             return utils.get_lambda_response(400, "Request missing property details")
 
