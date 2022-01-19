@@ -27,6 +27,7 @@ class RevletPropertyService:
                 response = self.PROPERTYSERVICE_TABLE.query(
                     KeyConditionExpression=Key("propertyId").eq(postcode_filter)
                 )
+            
             else:
                 response = self.PROPERTYSERVICE_TABLE.scan(
                     FilterExpression=Attr("dataSelector").begins_with("METADATA#")

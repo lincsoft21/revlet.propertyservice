@@ -224,8 +224,9 @@ class TestDeletePropertyService:
             TEST_PROPERTY_POSTCODE, TEST_PROPERTY_STREET_NAME
         )
 
+        data = json.loads(response["body"])
         assert response["statusCode"] == 200
-        assert response["body"]["streetName"] == TEST_PROPERTY_STREET_NAME
+        assert data["streetName"] == TEST_PROPERTY_STREET_NAME
 
     def test_delete_property_with_invalid_postcode(self):
         response = TEST_PROPERTYSERVICE_CLIENT.delete_property(
