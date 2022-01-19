@@ -26,8 +26,8 @@ def update_property_details(event, context):
         return utils.get_lambda_response(400, "Invalid request")
     else:
         if (
-            not "p" in event["queryStringParameters"]
-            or "s" in event["queryStringParameters"]
+            (not "p" in event["queryStringParameters"])
+            or (not "s" in event["queryStringParameters"])
         ):
             return utils.get_lambda_response(400, "Request missing property details")
 
