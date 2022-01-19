@@ -6,9 +6,10 @@ PROPERTYSERVICE_CLIENT = RevletPropertyService()
 
 
 def get_properties(event, context):
-    if "p" in event["queryStringParameters"]:
-        id = event["queryStringParameters"]["p"]
-        return PROPERTYSERVICE_CLIENT.get_properties(id)
+    if event["queryStringParameters"]:
+        if "p" in event["queryStringParameters"]:
+            postcode = event["queryStringParameters"]["p"]
+            return PROPERTYSERVICE_CLIENT.get_properties(postcode)
 
     return PROPERTYSERVICE_CLIENT.get_properties()
 
@@ -45,4 +46,6 @@ def delete_property(event, context):
         ):
             return utils.get_lambda_response(400, "Request missing property details")
 
-    return PROPERTYSERVICE_CLIENT.delete_property(event["queryStringParameters"]["p"], event["queryStringParameters"]["s"])
+    return PROPERTYSERVICE_CLIENT.delete_property(
+        event["queryStringParameters"]["p"], event["queryStringParameters"]["s"]
+    )
