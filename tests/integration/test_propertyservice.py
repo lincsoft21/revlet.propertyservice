@@ -148,6 +148,18 @@ class TestPostPropertyService:
 
         assert response["statusCode"] == 400
 
+    # It should not allow property with same details with difference casing
+    def test_post_property_with_same_details_different_casing(self):
+        test_postcode = TEST_PROPERTY_POSTCODE.lower()
+        test_street = TEST_PROPERTY_STREET_NAME.lower()
+        request_body = {
+            "postcode": test_postcode,
+            "streetName": test_street,
+        }
+        response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
+
+        assert response["statusCode"] == 400
+
 
 class TestPutPropertyService:
     @pytest.fixture(scope="class", autouse=True)

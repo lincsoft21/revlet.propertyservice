@@ -30,7 +30,7 @@ def get_lambda_response(status=200, data="", headers={}, isBase64=False):
 
 def clean_identifier(identifier):
     clean_value = re.sub(r"\W+", "", identifier)
-    return clean_value.strip().replace(" ", "")
+    return clean_value.strip().replace(" ", "").lower()
 
 
 def generate_property_key(key_value, type="postcode", hash_input=True):
