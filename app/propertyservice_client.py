@@ -110,4 +110,4 @@ class RevletPropertyService:
         except ClientError as e:
             return utils.get_lambda_response(400, e.response["Error"]["Message"])
 
-        return utils.get_lambda_response(200, response["Attributes"])
+        return utils.get_lambda_response(200, json.dumps(response["Attributes"], default=str))
