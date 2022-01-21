@@ -18,27 +18,24 @@ class RevletPropertyService:
             self.DYNAMO_CLIENT = client
             self.PROPERTYSERVICE_TABLE = self.DYNAMO_CLIENT.Table(table)
 
-    def get_properties(self, id=None):
-        id_defined = False
+    def get_properties(self, postcode=None):
+        filter_defined = False
         try:
-            if id == None:
+            if postcode:
+                filter_defined = True
+                postcode_filter = utils.generate_property_key(postcode)
+                response = self.PROPERTYSERVICE_TABLE.query(
+                    KeyConditionExpression=Key("propertyId").eq(postcode_filter)
+                )
+            
+            else:
                 response = self.PROPERTYSERVICE_TABLE.scan(
                     FilterExpression=Attr("dataSelector").begins_with("METADATA#")
-                )
-            else:
-                id_defined = True
-                response = self.PROPERTYSERVICE_TABLE.query(
-                    KeyConditionExpression=Key("propertyId").eq(id)
                 )
         except ClientError as e:
             return utils.get_lambda_response(400, e.response["Error"]["Message"])
 
-        if not "Items" in response:
-            return utils.get_lambda_response(
-                400, "An error occurred fetching property data"
-            )
-
-        if len(response["Items"]) == 0 and id_defined:
+        if len(response["Items"]) == 0 and filter_defined:
             return utils.get_lambda_response(404, "No property found")
 
         return utils.get_lambda_response(
@@ -47,23 +44,39 @@ class RevletPropertyService:
 
     def post_property(self, body):
         # Create ID for property
-        propertyId = str(uuid.uuid4())
+        property_id = utils.generate_property_key(body["postcode"])
+        data_selector = utils.generate_property_key(body["streetName"], "selector")
+        index_pk = "{}#{}".format(property_id, data_selector)
+
+        # Merge with index fields
         body.update(
-            {"propertyId": propertyId, "dataSelector": "METADATA#{}".format(propertyId)}
+            {
+                "propertyId": property_id,
+                "dataSelector": data_selector,
+                "reviewIndexPK": index_pk,
+                "reviewIndexSK": data_selector,
+            }
         )
 
-        self.PROPERTYSERVICE_TABLE.put_item(
-            Item=body,
-        )
+        try:
+            self.PROPERTYSERVICE_TABLE.put_item(
+                Item=body,
+                ConditionExpression="attribute_not_exists(dataSelector)",
+            )
+        except ClientError as e:
+            return utils.get_lambda_response(400, e.response["Error"]["Message"])
 
-        return utils.get_lambda_response(200, json.dumps({"propertyId": propertyId}))
+        return utils.get_lambda_response(200, "{} Created".format(property_id))
 
-    def update_property_details(self, id, body):
+    def update_property_details(self, postcode, street_name, body):
+        property_id = utils.generate_property_key(postcode)
+        data_selector = utils.generate_property_key(street_name, type="selector")
+
         try:
             response = self.PROPERTYSERVICE_TABLE.update_item(
                 Key={
-                    "propertyId": id,
-                    "dataSelector": "METADATA#{}".format(id),
+                    "propertyId": property_id,
+                    "dataSelector": data_selector,
                 },
                 ConditionExpression="attribute_exists(propertyId)",
                 UpdateExpression="set rooms=:r, parking=:p, garden=:g",
@@ -81,32 +94,21 @@ class RevletPropertyService:
             200, json.dumps(response["Attributes"], default=str)
         )
 
-    def delete_property(self, id):
-        # Delete all items under property (reviews and metadata)
-        delete_items = self.PROPERTYSERVICE_TABLE.query(
-            KeyConditionExpression=Key("propertyId").eq(id)
-        )
+    def delete_property(self, postcode, street_name):
+        property_id = utils.generate_property_key(postcode)
+        data_selector = utils.generate_property_key(street_name, "selector")
 
-        if len(delete_items["Items"]) == 0:
-            return utils.get_lambda_response(404, "Property does not exist")
+        try:
+            response = self.PROPERTYSERVICE_TABLE.delete_item(
+                Key={
+                    "propertyId": property_id,
+                    "dataSelector": data_selector,
+                },
+                ConditionExpression="attribute_exists(propertyId)",
+                ReturnValues="ALL_OLD",
+            )
 
-        delete_process = {"success": True, "messages": []}
-        for item in delete_items["Items"]:
-            try:
-                self.PROPERTYSERVICE_TABLE.delete_item(
-                    Key={
-                        "propertyId": item["propertyId"],
-                        "dataSelector": item["dataSelector"],
-                    },
-                )
+        except ClientError as e:
+            return utils.get_lambda_response(400, e.response["Error"]["Message"])
 
-            except ClientError as e:
-                delete_process["success"] = False
-                delete_process["messages"].append(
-                    "ERROR deleting: {}".format(item["dataSelector"])
-                )
-
-        if not delete_process["success"]:
-            return utils.get_lambda_response(400, "\n".join(delete_process["messages"]))
-
-        return utils.get_lambda_response(200, "Property {} deleted".format(id))
+        return utils.get_lambda_response(200, json.dumps(response["Attributes"], default=str))

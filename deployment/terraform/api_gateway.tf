@@ -7,11 +7,11 @@ locals {
       authorizer = null
       params = {
         "method" = {
-          "method.request.querystring.id" = false
+          "method.request.querystring.p" = false
         },
         "template" = {
           "application/json" = jsonencode({
-            "id" = "$input.params('id')"
+            "p" = "$input.params('p')"
           })
         }
       }
@@ -37,11 +37,13 @@ locals {
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
       params = {
         "method" = {
-          "method.request.querystring.id" = false
+          "method.request.querystring.p" = false
+          "method.request.querystring.s" = false
         },
         "template" = {
           "application/json" = jsonencode({
-            "id" = "$input.params('id')"
+            "p" = "$input.params('p')"
+            "s" = "$input.params('s')"
           })
         }
       }
@@ -53,11 +55,13 @@ locals {
       authorizer = aws_api_gateway_authorizer.propertyservice_api_admin_authorizer.id
       params = {
         "method" = {
-          "method.request.querystring.id" = true
+          "method.request.querystring.p" = true
+          "method.request.querystring.s" = true
         },
         "template" = {
           "application/json" = jsonencode({
-            "id" = "$input.params('id')"
+            "p" = "$input.params('p')"
+            "s" = "$input.params('s')"
           })
         }
       }
