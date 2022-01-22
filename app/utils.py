@@ -1,14 +1,12 @@
-from uuid import UUID, uuid4
 import hashlib
 import re
-import base64
 import uuid
 
 
 def validate_query_params(params: list, event):
     if not event["queryStringParams"]:
         return False
-    
+
     for param in params:
         if not param in event["queryStringParams"]:
             return False
@@ -18,7 +16,9 @@ def validate_query_params(params: list, event):
 
 # Validate postcode follows UK postcode format
 def validate_property_postcode(postcode: str):
-    return re.match(postcode, r"^([a-zA-Z]{1,2}[a-zA-Z\d]{1,2})\s(\d[a-zA-Z]{2})$")
+    return (
+        re.match(r"^([a-zA-Z]{1,2}[a-zA-Z\d]{1,2})\s(\d[a-zA-Z]{2})$", postcode)
+    ) != None
 
 
 def get_lambda_response(status=200, data="", headers={}, isBase64=False):
@@ -31,9 +31,9 @@ def get_lambda_response(status=200, data="", headers={}, isBase64=False):
 
 
 # Remove spaces and special characters from street names
-def clean_identifier(identifier):
+def clean_input(identifier):
     clean_value = re.sub(r"\W+", "", identifier)
-    return clean_value.strip().replace(" ", "").lower()
+    return clean_value.strip().replace(" ", "-").lower()
 
 
 def get_key_hash(key):
@@ -41,7 +41,7 @@ def get_key_hash(key):
 
 
 def generate_property_key_hash(key_value, type="postcode", hash_input=True):
-    clean_value = clean_identifier(key_value)
+    clean_value = clean_input(key_value)
 
     hash_value = key_value
     if hash_input:
@@ -79,12 +79,15 @@ def get_property_overall_rating(reviews):
 
 
 def validate_id(id, id_type=None):
+    result = None
     # Confirm that the ID is 10 bytes long
     if id_type == None:
-        return re.match(id, r"^\w{10}$")
+        result = re.match(r"^\w{10}$", id)
+        return result != None
 
     if id_type.upper() not in ["REVIEW", "PROPERTY", "METADATA"]:
         return False
 
     # Given an ID type, validate
-    return re.match(id, id_type.upper() + r"#\w{10}$")
+    regex_string = r"^" + id_type.upper() + r"#\w{10}$"
+    return (re.match(regex_string, id)) != None
