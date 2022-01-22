@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "propertyId": {
+      "type": "string"
+    },
+    "postcode": {
+      "type": "string"
+    },
+    "streetName": {
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    },
+    "dateCreated": {
+      "type": "datetime"
+    },
+    "overall": {
+      "type": "number"
+    },
+    "location": {
+      "type": "number"
+    },
+    "management": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "postcode",
+    "streetName",
+    "title",
+    "overall",
+    "location",
+    "management"
+  ]
+}

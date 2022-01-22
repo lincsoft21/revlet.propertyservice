@@ -18,6 +18,9 @@
     },
     "garden": {
       "type": "boolean"
+    },
+    "overallRating": {
+      "type": "number"
     }
   },
   "title": "PropertyInput",

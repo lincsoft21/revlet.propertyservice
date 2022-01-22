@@ -23,11 +23,11 @@ class RevletPropertyService:
         try:
             if postcode:
                 filter_defined = True
-                postcode_filter = utils.generate_property_key(postcode)
+                postcode_filter = utils.generate_property_key_hash(postcode)
                 response = self.PROPERTYSERVICE_TABLE.query(
                     KeyConditionExpression=Key("propertyId").eq(postcode_filter)
                 )
-            
+
             else:
                 response = self.PROPERTYSERVICE_TABLE.scan(
                     FilterExpression=Attr("dataSelector").begins_with("METADATA#")
@@ -43,9 +43,12 @@ class RevletPropertyService:
         )
 
     def post_property(self, body):
+        if not utils.validate_property_postcode(body["postcode"]):
+            return utils.get_lambda_response(400, "Invalid postcode")
+
         # Create ID for property
-        property_id = utils.generate_property_key(body["postcode"])
-        data_selector = utils.generate_property_key(body["streetName"], "selector")
+        property_id = utils.generate_property_key_hash(body["postcode"])
+        data_selector = utils.generate_property_key_hash(body["streetName"], "selector")
         index_pk = "{}#{}".format(property_id, data_selector)
 
         # Merge with index fields
@@ -69,8 +72,8 @@ class RevletPropertyService:
         return utils.get_lambda_response(200, "{} Created".format(property_id))
 
     def update_property_details(self, postcode, street_name, body):
-        property_id = utils.generate_property_key(postcode)
-        data_selector = utils.generate_property_key(street_name, type="selector")
+        property_id = utils.generate_property_key_hash(postcode)
+        data_selector = utils.generate_property_key_hash(street_name, type="selector")
 
         try:
             response = self.PROPERTYSERVICE_TABLE.update_item(
@@ -95,8 +98,8 @@ class RevletPropertyService:
         )
 
     def delete_property(self, postcode, street_name):
-        property_id = utils.generate_property_key(postcode)
-        data_selector = utils.generate_property_key(street_name, "selector")
+        property_id = utils.generate_property_key_hash(postcode)
+        data_selector = utils.generate_property_key_hash(street_name, "selector")
 
         try:
             response = self.PROPERTYSERVICE_TABLE.delete_item(
@@ -111,4 +114,6 @@ class RevletPropertyService:
         except ClientError as e:
             return utils.get_lambda_response(400, e.response["Error"]["Message"])
 
-        return utils.get_lambda_response(200, json.dumps(response["Attributes"], default=str))
+        return utils.get_lambda_response(
+            200, json.dumps(response["Attributes"], default=str)
+        )
