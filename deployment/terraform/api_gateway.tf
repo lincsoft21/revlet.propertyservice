@@ -36,7 +36,7 @@ locals {
       method   = "PUT"
       resource = "properties"
       model = {
-        "application/json" = aws_api_gateway_model.propertyservice_details_models["property_details"].name
+        "application/json" = aws_api_gateway_model.propertyservice_models["property_details"].name
       }
       validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
@@ -93,7 +93,7 @@ locals {
       method   = "POST"
       resource = "reviews"
       model = {
-        "application/json" = aws_api_gateway_model.propertyservice_review_models["review"].name
+        "application/json" = aws_api_gateway_model.propertyservice_models["review"].name
       }
       validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
