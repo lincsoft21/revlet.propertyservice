@@ -89,7 +89,7 @@ class TestPostPropertyService:
         )
 
     def test_post_property(self):
-        request_body = {"postcode": "1234", "streetName": "1 Test Property"}
+        request_body = {"postcode": "TE1 2ST", "streetName": "1 Test Property"}
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
         assert response["statusCode"] == 200
@@ -100,7 +100,7 @@ class TestPostPropertyService:
             request_body["postcode"],
             request_body["streetName"],
         )
-        assert test_property["Item"]["postcode"] == "1234"
+        assert test_property["Item"]["postcode"] == "TE1 2ST"
         assert test_property["Item"]["streetName"] == "1 Test Property"
 
     # It should allow creation of property with same postcode
@@ -124,7 +124,7 @@ class TestPostPropertyService:
 
     # It should allow the same street with a different postcode
     def test_post_property_with_same_street(self):
-        request_body = {"postcode": "YZ9 10BA", "streetName": TEST_PROPERTY_STREET_NAME}
+        request_body = {"postcode": "YZ9 1BA", "streetName": TEST_PROPERTY_STREET_NAME}
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
         assert response["statusCode"] == 200
@@ -135,7 +135,7 @@ class TestPostPropertyService:
             request_body["postcode"],
             request_body["streetName"],
         )
-        assert test_property["Item"]["postcode"] == "YZ9 10BA"
+        assert test_property["Item"]["postcode"] == "YZ9 1BA"
         assert test_property["Item"]["streetName"] == TEST_PROPERTY_STREET_NAME
 
     # It should not allow the same property to be added twice
@@ -156,6 +156,12 @@ class TestPostPropertyService:
             "postcode": test_postcode,
             "streetName": test_street,
         }
+        response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
+
+        assert response["statusCode"] == 400
+
+    def test_post_property_with_invalid_postcode(self):
+        request_body = {"postcode": "12345", "streetName": TEST_PROPERTY_STREET_NAME}
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
         assert response["statusCode"] == 400

@@ -1,7 +1,7 @@
 import json
 from uuid import uuid4
 import boto3
-from utils import generate_property_key
+from utils import generate_property_key, generate_property_key_hash
 
 
 def get_event_body(body, params):
@@ -20,8 +20,8 @@ def add_test_data(
     if not test_property_street_name:
         test_property_street_name = "123 Street"
 
-    pk = generate_property_key(test_property_postcode)
-    sk = generate_property_key(test_property_street_name, "selector")
+    pk = generate_property_key_hash(test_property_postcode)
+    sk = generate_property_key_hash(test_property_street_name, "selector")
 
     if not test_data:
         test_data = {
@@ -52,8 +52,8 @@ def get_test_data(
     test_property_postcode: str,
     test_property_street_name: str,
 ):
-    pk = generate_property_key(test_property_postcode)
-    sk = generate_property_key(test_property_street_name, "selector")
+    pk = generate_property_key_hash(test_property_postcode)
+    sk = generate_property_key_hash(test_property_street_name, "selector")
 
     test_result = table.get_item(
         Key={
