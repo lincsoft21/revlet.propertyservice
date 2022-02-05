@@ -7,22 +7,19 @@
     "description": {
       "type": "string"
     },
-    "propertyId": {
-      "type": "string"
-    },
-    "postcode": {
-      "type": "string"
-    },
-    "streetName": {
-      "type": "string"
-    },
     "userId": {
+      "type": "string"
+    },
+    "tenancyStartDate": {
+      "type": "string"
+    },
+    "tenancyEndDate": {
       "type": "string"
     },
     "dateCreated": {
       "type": "datetime"
     },
-    "overall": {
+    "facilities": {
       "type": "number"
     },
     "location": {
@@ -33,11 +30,11 @@
     }
   },
   "required": [
-    "postcode",
-    "streetName",
     "title",
-    "overall",
     "location",
-    "management"
+    "management",
+    "facilities",
+    "tenancyStartDate",
+    "tenancyEndDate"
   ]
 }

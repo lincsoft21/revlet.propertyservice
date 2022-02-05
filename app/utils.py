@@ -33,30 +33,53 @@ def get_lambda_response(status=200, data="", headers={}, isBase64=False):
 # Remove spaces and special characters from street names
 def clean_input(identifier):
     clean_value = re.sub(r"\W+", "", identifier)
-    return clean_value.strip().replace(" ", "-").lower()
+    return clean_value.strip().replace(" ", "-")
 
 
 def get_key_hash(key):
     return hashlib.shake_256(key.encode()).hexdigest(5)
 
 
-def generate_property_key_hash(key_value, type="postcode", hash_input=True):
-    clean_value = clean_input(key_value)
-
-    hash_value = key_value
-    if hash_input:
-        hash_value = get_key_hash(clean_value)
-
-    if type == "selector":
-        return "METADATA#{}".format(hash_value)
-    else:
-        return "PROPERTY#{}".format(hash_value)
+def validate_hash(key):
+    result = re.match(r"^\w{10}$", key)
+    return result != None
 
 
-def generate_property_key(postcode, streetName):
-    p_hash = generate_property_key_hash(postcode)
-    s_hash = generate_property_key_hash(streetName, "selector")
-    return "{}#{}".format(p_hash, s_hash)
+def validate_property_id(id):
+    result = re.match(r"^\w{10}#\w{10}$", id)
+    return result != None
+
+
+def get_metadata_key_from_item_id(id):
+    key_hashes = id.split("#")
+    return "META#{}".format(key_hashes[1])
+
+
+def generate_property_key_hash(hash_value, key="PROPERTY"):
+    if not validate_hash(hash_value):
+        raise Exception("Invalid hash value")
+
+    clean_value = clean_input(hash_value)
+    if not key in ["PROPERTY", "METADATA", "REVIEW"]:
+        raise Exception({"message": "Invalid key type"})
+
+    return "{}#{}".format(key.upper(), clean_value)
+
+
+def generate_property_keys(postcode_hash, street_name_hash=None):
+    key_map = {"itemId": "", "dataSelector": "", "reviewIndexPK": ""}
+
+    key_map["itemId"] = generate_property_key_hash(postcode_hash)
+
+    if street_name_hash:
+        key_map["dataSelector"] = generate_property_key_hash(
+            street_name_hash, "METADATA"
+        )
+        key_map["reviewIndexPK"] = "{}#{}".format(
+            key_map["itemId"], key_map["dataSelector"]
+        )
+
+    return key_map
 
 
 def generate_review_key(id=None):
@@ -64,18 +87,6 @@ def generate_review_key(id=None):
         new_uuid = (uuid.uuid4()).hex
         id = get_key_hash(new_uuid)
     return "REVIEW#{}".format(str(id))
-
-
-def get_property_overall_rating(reviews):
-    if len(reviews) == 0:
-        return 0
-
-    total = 0
-    for rev in range(reviews):
-        total += rev["overall"]
-
-    average = total / len(reviews)
-    return round(average, 1)
 
 
 def validate_id(id, id_type=None):

@@ -1,4 +1,4 @@
-from app.reviewservice_client import RevletReviewService
+from review_client import RevletReviewService
 from propertyservice_client import RevletPropertyService
 import utils
 import json
@@ -9,10 +9,16 @@ REVIEWSERVICE_CLIENT = RevletReviewService()
 
 def get_properties(event, context):
     if not utils.validate_query_params(["p"], event):
-        return PROPERTYSERVICE_CLIENT.get_properties()
+        return utils.get_lambda_response(400, "Request missing property details")
 
     postcode = event["queryStringParameters"]["p"]
-    return PROPERTYSERVICE_CLIENT.get_properties(postcode)
+    if not utils.validate_query_params(["s"], event):
+        return PROPERTYSERVICE_CLIENT.get_properties_by_postcode(postcode)
+
+    street_name = event["queryStringParameters"]["s"]
+    return PROPERTYSERVICE_CLIENT.get_property_by_postcode_and_streetname(
+        postcode, street_name
+    )
 
 
 def post_property(event, context):
@@ -51,6 +57,9 @@ def get_reviews(event, context):
 
 
 def post_review(event, context):
+    if not utils.validate_query_params(["p", "s"], event):
+        return utils.get_lambda_response(400, "Request missing property details")
+
     data = json.loads(event["body"])
     return REVIEWSERVICE_CLIENT.post_item(data)
 
