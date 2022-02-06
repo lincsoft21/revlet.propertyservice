@@ -38,9 +38,9 @@ def setup():
         BillingMode="PAY_PER_REQUEST",
     )
     test_utils.add_test_property(
-        TEST_PROPERTYSERVICE_CLIENT.dbClient.PROPERTYSERVICE_TABLE, TEST_PROPERTY
+        TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE, TEST_PROPERTY
     )
-    yield TEST_PROPERTYSERVICE_CLIENT.dbClient.PROPERTYSERVICE_TABLE
+    yield TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE
     ddb_client.delete_table(TableName=TEST_TABLE_NAME)
 
 
@@ -89,7 +89,7 @@ class TestPostPropertyService:
 
         # Validate property creation
         test_property = test_utils.get_test_property(
-            TEST_PROPERTYSERVICE_CLIENT.dbClient.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE,
             request_body["postcode"],
             request_body["streetName"],
         )
@@ -108,7 +108,7 @@ class TestPostPropertyService:
 
         # Validate property creation
         test_property = test_utils.get_test_property(
-            TEST_PROPERTYSERVICE_CLIENT.dbClient.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE,
             request_body["postcode"],
             request_body["streetName"],
         )
@@ -124,7 +124,7 @@ class TestPostPropertyService:
 
         # Validate property creation
         test_property = test_utils.get_test_property(
-            TEST_PROPERTYSERVICE_CLIENT.dbClient.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE,
             request_body["postcode"],
             request_body["streetName"],
         )
