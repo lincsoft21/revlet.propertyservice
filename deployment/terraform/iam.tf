@@ -17,7 +17,7 @@ resource "aws_iam_role" "propertyservice_role" {
   })
 
   tags = {
-    env     = "dev"
+    env     = var.ENVIRONMENT
     service = "propertyservice"
   }
 }

@@ -10,11 +10,13 @@ locals {
       authorizer = null
       params = {
         "method" = {
-          "method.request.querystring.p" = false
+          "method.request.querystring.p"  = false
+          "method.request.querystring.id" = false
         },
         "template" = {
           "application/json" = jsonencode({
-            "p" = "$input.params('p')"
+            "p"  = "$input.params('p')",
+            "id" = "$input.params('id')"
           })
         }
       }
@@ -42,13 +44,11 @@ locals {
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
       params = {
         "method" = {
-          "method.request.querystring.p" = false
-          "method.request.querystring.s" = false
+          "method.request.querystring.id" = false
         },
         "template" = {
           "application/json" = jsonencode({
-            "p" = "$input.params('p')"
-            "s" = "$input.params('s')"
+            "id" = "$input.params('id')"
           })
         }
       }
@@ -61,13 +61,11 @@ locals {
       authorizer = aws_api_gateway_authorizer.propertyservice_api_admin_authorizer.id
       params = {
         "method" = {
-          "method.request.querystring.p" = true
-          "method.request.querystring.s" = true
+          "method.request.querystring.id" = true
         },
         "template" = {
           "application/json" = jsonencode({
-            "p" = "$input.params('p')"
-            "s" = "$input.params('s')"
+            "id" = "$input.params('id')"
           })
         }
       }
@@ -80,11 +78,11 @@ locals {
       authorizer = null
       params = {
         "method" = {
-          "method.request.querystring.p" = true
+          "method.request.querystring.id" = true
         },
         "template" = {
           "application/json" = jsonencode({
-            "p" = "$input.params('p')"
+            "id" = "$input.params('id')"
           })
         }
       }
@@ -98,8 +96,14 @@ locals {
       validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
       params = {
-        "method"   = null,
-        "template" = null
+        "method" = {
+          "method.request.querystring.id" = true
+        },
+        "template" = {
+          "application/json" = jsonencode({
+            "id" = "$input.params('id')"
+          })
+        }
       }
     }
     delete_review = {
@@ -111,10 +115,12 @@ locals {
       params = {
         "method" = {
           "method.request.querystring.id" = true
+          "method.request.querystring.r"  = true
         },
         "template" = {
           "application/json" = jsonencode({
-            "p" = "$input.params('id')"
+            "id" = "$input.params('id')",
+            "r"  = "$input.params('r')"
           })
         }
       }
