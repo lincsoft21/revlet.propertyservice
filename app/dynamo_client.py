@@ -5,7 +5,7 @@ from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 PROPERTIES_TABLE = "revlet-propertyservice-{}-db".format(
-    os.environ.get("REVLET_ENV", "test")
+    os.environ.get("REVLET_ENV", "dev")
 )
 DEFAULT_REGION = "eu-west-2"
 
