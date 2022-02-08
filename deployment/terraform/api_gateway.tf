@@ -1,6 +1,6 @@
 locals {
   resources = ["properties", "reviews"]
-  models    = ["property", "review", "property_details"]
+  models    = ["Property", "Review", "PropertyDetails"]
   function_method_map = {
     get_properties = {
       method     = "GET"
