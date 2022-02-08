@@ -18,9 +18,12 @@
     },
     "garden": {
       "type": "boolean"
+    },
+    "dateCreated": {
+      "type": "datetime"
     }
   },
-  "title": "PropertyInput",
+  "title": "Property",
   "required": [
     "postcode",
     "streetName"
