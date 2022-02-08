@@ -1,7 +1,7 @@
 from models.property_response_model import PropertyResponseModel
-from property_client import RevletPropertyService
+from handlers.property_client import RevletPropertyService
 from models.review_request_model import ReviewModel
-from dynamo_client import DynamoClient
+from data.dynamo_client import DynamoClient
 from models.property_request_model import PropertyRequestModel
 import utils
 import json

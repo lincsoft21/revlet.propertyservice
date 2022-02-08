@@ -4,8 +4,8 @@ from models.property_request_model import PropertyRequestModel
 import boto3
 import pytest
 import test_utils
-from dynamo_client import DynamoClient
-from property_client import RevletPropertyService
+from data.dynamo_client import DynamoClient
+from handlers.property_client import RevletPropertyService
 
 ddb_client = boto3.client(
     "dynamodb", endpoint_url="http://localhost:8000", region_name="eu-west-2"

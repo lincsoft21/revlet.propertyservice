@@ -1,6 +1,6 @@
 from models.review_request_model import ReviewModel
 from models.property_request_model import PropertyRequestModel
-from dynamo_client import DynamoClient
+from data.dynamo_client import DynamoClient
 from models.property_response_model import PropertyResponseModel
 from boto3.dynamodb.conditions import Key, Attr
 import json
