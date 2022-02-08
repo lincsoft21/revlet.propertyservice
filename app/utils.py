@@ -4,10 +4,10 @@ import uuid
 
 
 def validate_query_params(param, event):
-    if not "queryStringParams" in event:
+    if not "queryStringParameters" in event:
         return False
 
-    if param in event["queryStringParams"]:
+    if param in event["queryStringParameters"]:
         return True
 
     return False

@@ -63,7 +63,7 @@ def post_review(event, context):
         return utils.get_lambda_response(400, "Request missing property ID")
 
     data = json.loads(event["body"])
-    return REVIEWSERVICE_CLIENT.post_item(event["querryStringParams"]["id"], data)
+    return REVIEWSERVICE_CLIENT.post_item(event["querryStringParameters"]["id"], data)
 
 
 def delete_review(event, context):
@@ -73,5 +73,5 @@ def delete_review(event, context):
         )
 
     return REVIEWSERVICE_CLIENT.delete_review(
-        event["queryStringParameters"]["id"], event["queryStringParams"]["r"]
+        event["queryStringParameters"]["id"], event["queryStringParameters"]["r"]
     )
