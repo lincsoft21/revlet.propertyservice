@@ -6,8 +6,8 @@ from botocore.exceptions import ClientError
 
 
 class DynamoClient:
-    def __init__(self, table, region="eu-west-2", **args):
-        self.DYNAMO_CLIENT = boto3.resource("dynamodb", region_name=region, *args)
+    def __init__(self, table, region="eu-west-2", args={}):
+        self.DYNAMO_CLIENT = boto3.resource("dynamodb", region_name=region, **args)
         self.PROPERTYSERVICE_TABLE = self.DYNAMO_CLIENT.Table(table)
 
     def get_all_items(self, args={}):
