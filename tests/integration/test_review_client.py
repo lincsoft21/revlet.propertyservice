@@ -6,8 +6,8 @@ from models.property_request_model import PropertyRequestModel
 import boto3
 import pytest
 import test_utils
-from property_client import RevletPropertyService
 from review_client import RevletReviewService
+from dynamo_client import DynamoClient
 
 ddb_client = boto3.client(
     "dynamodb", endpoint_url="http://localhost:8000", region_name="eu-west-2"
@@ -19,7 +19,8 @@ ddb = boto3.resource(
 TEST_TABLE_NAME = "revlet-propertyservice-{}-db".format(
     os.environ.get("REVLET_ENV", "review-local")
 )
-TEST_CLIENT = RevletReviewService(ddb)
+db_client = DynamoClient(TEST_TABLE_NAME, "eu-west-2", {"endpoint_url": "http://localhost:8080"})
+TEST_CLIENT = RevletReviewService(db_client)
 
 # Test Property
 TEST_PROPERTY_POSTCODE = "AB1 2CD"
