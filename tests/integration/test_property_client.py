@@ -10,14 +10,13 @@ from property_client import RevletPropertyService
 ddb_client = boto3.client(
     "dynamodb", endpoint_url="http://localhost:8000", region_name="eu-west-2"
 )
-ddb = boto3.resource(
-    "dynamodb", endpoint_url="http://localhost:8000", region_name="eu-west-2"
-)
 
 TEST_TABLE_NAME = "revlet-propertyservice-{}-db".format(
     os.environ.get("REVLET_ENV", "property-local")
 )
-db_client = DynamoClient(TEST_TABLE_NAME, "eu-west-2", {"endpoint_url": "http://localhost:8080"})
+db_client = DynamoClient(
+    TEST_TABLE_NAME, "eu-west-2", {"endpoint_url": "http://localhost:8000"}
+)
 TEST_PROPERTYSERVICE_CLIENT = RevletPropertyService(db_client)
 
 TEST_PROPERTY_POSTCODE = "AB1 2CD"
@@ -27,7 +26,7 @@ TEST_PROPERTY = PropertyRequestModel(TEST_PROPERTY_POSTCODE, TEST_PROPERTY_STREE
 
 @pytest.fixture(scope="session", autouse=True)
 def setup():
-    ddb.create_table(
+    db_client.DYNAMO_CLIENT.create_table(
         TableName=TEST_TABLE_NAME,
         AttributeDefinitions=[
             {"AttributeName": "itemId", "AttributeType": "S"},

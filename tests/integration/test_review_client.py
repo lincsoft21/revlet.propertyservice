@@ -12,14 +12,13 @@ from dynamo_client import DynamoClient
 ddb_client = boto3.client(
     "dynamodb", endpoint_url="http://localhost:8000", region_name="eu-west-2"
 )
-ddb = boto3.resource(
-    "dynamodb", endpoint_url="http://localhost:8000", region_name="eu-west-2"
-)
 
 TEST_TABLE_NAME = "revlet-propertyservice-{}-db".format(
     os.environ.get("REVLET_ENV", "review-local")
 )
-db_client = DynamoClient(TEST_TABLE_NAME, "eu-west-2", {"endpoint_url": "http://localhost:8080"})
+db_client = DynamoClient(
+    TEST_TABLE_NAME, "eu-west-2", {"endpoint_url": "http://localhost:8000"}
+)
 TEST_CLIENT = RevletReviewService(db_client)
 
 # Test Property
@@ -42,7 +41,7 @@ TEST_REVIEW = ReviewModel(TEST_PROPERTY.itemId, **TEST_REVIEW_DETAILS)
 
 @pytest.fixture(scope="session", autouse=True)
 def setup():
-    ddb.create_table(
+    db_client.DYNAMO_CLIENT.create_table(
         TableName=TEST_TABLE_NAME,
         AttributeDefinitions=[
             {"AttributeName": "itemId", "AttributeType": "S"},
