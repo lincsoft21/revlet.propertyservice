@@ -9,8 +9,8 @@ import operator
 
 
 class RevletPropertyService:
-    def __init__(self, client=None):
-        self.DBClient = DynamoClient(client)
+    def __init__(self, db_client: DynamoClient):
+        self.DBClient = db_client
 
     def get_properties_by_postcode(self, postcode_hash):
         if not utils.validate_hash(postcode_hash):

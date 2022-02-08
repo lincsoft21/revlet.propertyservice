@@ -3,15 +3,14 @@ import re
 import uuid
 
 
-def validate_query_params(params: list, event):
+def validate_query_params(param, event):
     if not "queryStringParams" in event:
         return False
 
-    for param in params:
-        if not param in event["queryStringParams"]:
-            return False
+    if param in event["queryStringParams"]:
+        return True
 
-    return True
+    return False
 
 
 # Validate postcode follows UK postcode format

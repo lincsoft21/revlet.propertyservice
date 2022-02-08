@@ -4,20 +4,11 @@ import os
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
-PROPERTIES_TABLE = "revlet-propertyservice-{}-db".format(
-    os.environ.get("REVLET_ENV", "dev")
-)
-DEFAULT_REGION = "eu-west-2"
-
 
 class DynamoClient:
-    def __init__(self, client=None, table=PROPERTIES_TABLE, region=DEFAULT_REGION):
-        if not client:
-            self.DYNAMO_CLIENT = boto3.resource("dynamodb", region_name=region)
-            self.PROPERTYSERVICE_TABLE = self.DYNAMO_CLIENT.Table(table)
-        else:
-            self.DYNAMO_CLIENT = client
-            self.PROPERTYSERVICE_TABLE = self.DYNAMO_CLIENT.Table(table)
+    def __init__(self, table, region="eu-west-2", **args):
+        self.DYNAMO_CLIENT = boto3.resource("dynamodb", region_name=region, *args)
+        self.PROPERTYSERVICE_TABLE = self.DYNAMO_CLIENT.Table(table)
 
     def get_all_items(self, args={}):
         try:

@@ -10,9 +10,9 @@ import operator
 
 
 class RevletReviewService:
-    def __init__(self, client=None):
-        self.DBClient = DynamoClient(client)
-        self.PropertyClient = RevletPropertyService(client)
+    def __init__(self, db_client: DynamoClient):
+        self.DBClient = db_client
+        self.PropertyClient = RevletPropertyService(db_client)
 
     def get_reviews(self, property_id):
         if not utils.validate_property_id(property_id):

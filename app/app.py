@@ -1,10 +1,17 @@
+from app.dynamo_client import DynamoClient
 from review_client import RevletReviewService
 from property_client import RevletPropertyService
 import utils
 import json
+import os
 
-PROPERTYSERVICE_CLIENT = RevletPropertyService()
-REVIEWSERVICE_CLIENT = RevletReviewService()
+PROPERTIES_TABLE = "revlet-propertyservice-{}-db".format(
+    os.environ.get("REVLET_ENV", "dev")
+)
+
+DYNAMO_CLIENT = DynamoClient(PROPERTIES_TABLE)
+PROPERTYSERVICE_CLIENT = RevletPropertyService(DYNAMO_CLIENT)
+REVIEWSERVICE_CLIENT = RevletReviewService(DYNAMO_CLIENT)
 
 
 def get_properties(event, context):
