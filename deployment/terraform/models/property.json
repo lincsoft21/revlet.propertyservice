@@ -18,9 +18,6 @@
     },
     "garden": {
       "type": "boolean"
-    },
-    "dateCreated": {
-      "type": "datetime"
     }
   },
   "title": "Property",

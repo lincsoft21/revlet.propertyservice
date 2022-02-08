@@ -16,9 +16,6 @@
     "tenancyEndDate": {
       "type": "string"
     },
-    "dateCreated": {
-      "type": "datetime"
-    },
     "facilities": {
       "type": "number"
     },
