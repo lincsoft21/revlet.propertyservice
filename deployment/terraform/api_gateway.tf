@@ -1,6 +1,6 @@
 locals {
   resources = ["properties", "reviews"]
-  models    = ["Property", "Review", "PropertyDetails"]
+  models    = ["property", "review", "PropertyDetails"]
   function_method_map = {
     get_properties = {
       method     = "GET"
@@ -25,7 +25,7 @@ locals {
       method   = "POST"
       resource = "properties"
       model = {
-        "application/json" = aws_api_gateway_model.propertyservice_models["Property"].name
+        "application/json" = aws_api_gateway_model.propertyservice_models["property"].name
       }
       validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
@@ -91,7 +91,7 @@ locals {
       method   = "POST"
       resource = "reviews"
       model = {
-        "application/json" = aws_api_gateway_model.propertyservice_models["Review"].name
+        "application/json" = aws_api_gateway_model.propertyservice_models["review"].name
       }
       validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
