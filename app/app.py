@@ -1,5 +1,5 @@
 from review_client import RevletReviewService
-from propertyservice_client import RevletPropertyService
+from property_client import RevletPropertyService
 import utils
 import json
 

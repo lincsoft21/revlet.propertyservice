@@ -3,7 +3,6 @@ from models.property_request_model import PropertyRequestModel
 from dynamo_client import DynamoClient
 from models.property_response_model import PropertyResponseModel
 from boto3.dynamodb.conditions import Key, Attr
-from botocore.exceptions import ClientError
 import json
 import utils
 import operator
