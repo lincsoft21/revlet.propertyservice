@@ -1,4 +1,4 @@
-from app.dynamo_client import DynamoClient
+from dynamo_client import DynamoClient
 from review_client import RevletReviewService
 from property_client import RevletPropertyService
 import utils
@@ -68,6 +68,10 @@ def post_review(event, context):
 
 def delete_review(event, context):
     if not utils.validate_query_params(["id", "r"], event):
-        return utils.get_lambda_response(400, "Request missing property or review details")
+        return utils.get_lambda_response(
+            400, "Request missing property or review details"
+        )
 
-    return REVIEWSERVICE_CLIENT.delete_review(event["queryStringParameters"]["id"], event["queryStringParams"]["r"])
+    return REVIEWSERVICE_CLIENT.delete_review(
+        event["queryStringParameters"]["id"], event["queryStringParams"]["r"]
+    )
