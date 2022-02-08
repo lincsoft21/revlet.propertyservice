@@ -8,11 +8,11 @@ REVIEWSERVICE_CLIENT = RevletReviewService()
 
 
 def get_properties(event, context):
-    if event["queryStringParameters"]["p"]:
+    if utils.validate_query_params(["p"], event):
         return PROPERTYSERVICE_CLIENT.get_properties_by_postcode(
             event["queryStringParameters"]["p"]
         )
-    elif event["queryStringParameters"]["id"]:
+    elif utils.validate_query_params(["id"], event):
         return PROPERTYSERVICE_CLIENT.get_property_by_id(
             event["queryStringParameters"]["id"]
         )
