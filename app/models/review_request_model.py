@@ -29,13 +29,13 @@ class ReviewModel(PropertyServiceItem):
     def validate_review_tenancy_dates(self):
         try:
             # Convert dates to datetime
-            ts_date = datetime.strptime(self.tenancyStartDate, "%m-%Y").date
+            ts_date = datetime.strptime(self.tenancyStartDate, "%m-%Y").date()
 
             # If tenancy is still active, validate start date is in past
             if self.tenancyEndDate.upper() == "PRESENT":
-                return date.today() > ts_date()
+                return date.today() > ts_date
 
-            te_date = datetime.strptime(self.tenancyEndDate, "%m-%Y").date
+            te_date = datetime.strptime(self.tenancyEndDate, "%m-%Y").date()
         except Exception as e:
             print(f"Failed to convert dates: {e}")
             return False
