@@ -30,8 +30,8 @@ TEST_PROPERTY = PropertyRequestModel(TEST_PROPERTY_POSTCODE, TEST_PROPERTY_STREE
 TEST_REVIEW_DETAILS = {
     "title": "Test Review",
     "description": "Test Review Description",
-    "tenancyStart": "06-2020",
-    "tenancyEnd": "PRESENT",
+    "tenancyStartDate": "06-2020",
+    "tenancyEndDate": "PRESENT",
     "management": 3,
     "location": 3,
     "facilities": 3,
