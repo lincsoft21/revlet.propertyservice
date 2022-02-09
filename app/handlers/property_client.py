@@ -1,3 +1,4 @@
+from responders.lambda_responder import LambdaResponder
 from models.review_request_model import ReviewModel
 from models.property_request_model import PropertyRequestModel
 from data.dynamo_client import DynamoClient
@@ -9,64 +10,68 @@ import operator
 
 
 class RevletPropertyService:
-    def __init__(self, db_client: DynamoClient):
-        self.DBClient = db_client
+    def __init__(self, db_client: DynamoClient, responder: LambdaResponder):
+        self._dbclient = db_client
+        self._responder = responder
 
     def get_properties_by_postcode(self, postcode_hash):
         if not utils.validate_hash(postcode_hash):
-            return utils.get_lambda_response(400, "Invalid Postcode")
+            return self._responder.return_invalid_request_response("Invalid postcode")
 
         try:
             args = {
                 "FilterExpression": Key("itemId").begins_with(postcode_hash)
                 & Key("dataSelector").begins_with("META#")
             }
-            response = self.DBClient.get_all_items(args)
+            response = self._dbclient.get_all_items(args)
         except Exception as e:
-            return utils.get_lambda_response(400, str(e))
+            return self._responder.return_internal_server_error_response(str(e))
 
-        if len(response) == 0:
-            return utils.get_lambda_response(404, "No property found")
-
-        return utils.get_lambda_response(200, json.dumps(response, default=str))
+        return self._responder.return_success_response(response)
 
     def get_property_by_id(self, property_id):
         # Validate property ID
         if not utils.validate_property_id(property_id):
-            return utils.get_lambda_response(400, "Invalid Property ID")
+            return self._responder.return_invalid_request_response(
+                "Invalid property ID"
+            )
 
         try:
             query = Key("itemId").eq(property_id) & Key("dataSelector").begins_with(
                 "META#"
             )
-            response = self.DBClient.query_items(query)
+            response = self._dbclient.query_items(query)
         except Exception as e:
-            return utils.get_lambda_response(400, str(e))
+            return self._responder.return_internal_server_error_response(str(e))
 
         if len(response) == 0:
-            return utils.get_lambda_response(404, "No property found")
+            return self._responder.return_not_found_response("Property not found")
 
         return_property = PropertyResponseModel(**response[0])
-        return utils.get_lambda_response(
-            200, json.dumps(return_property.convert_to_dictionary(), default=str)
+        return self._responder.return_success_response(
+            return_property.convert_to_dictionary()
         )
 
     def post_property(self, body):
         new_property = PropertyRequestModel(**body)
         if not new_property.validate_property_postcode():
-            return utils.get_lambda_response(400, "Invalid postcode")
+            return self._responder.return_invalid_request_response("Invalid postcode")
 
         args = {"ConditionExpression": "attribute_not_exists(dataSelector)"}
 
         try:
-            self.DBClient.post_item(
+            self._dbclient.post_item(
                 new_property.convert_to_dictionary(),
                 args,
             )
+        except ValueError as v:
+            return self._responder.return_invalid_request_response(str(v))
         except Exception as e:
-            return utils.get_lambda_response(400, str(e))
+            return self._responder.return_internal_server_error_response(str(e))
 
-        return utils.get_lambda_response(200, "{} Created".format(new_property.itemId))
+        return self._responder.return_success_response(
+            "{} Created".format(new_property.itemId)
+        )
 
     def update_property_details(self, property_id, body):
         args = {
@@ -74,11 +79,13 @@ class RevletPropertyService:
         }
 
         if not utils.validate_property_id(property_id):
-            return utils.get_lambda_response(400, "Invalid property ID")
+            return self._responder.return_invalid_request_response(
+                "Invalid property ID"
+            )
 
         try:
             meta_key = utils.get_metadata_key_from_item_id(property_id)
-            response = self.DBClient.update_item(
+            response = self._dbclient.update_item(
                 property_id,
                 meta_key,
                 "set rooms=:r, parking=:p, garden=:g",
@@ -89,29 +96,31 @@ class RevletPropertyService:
                 },
                 args,
             )
+        except ValueError as v:
+            return self._responder.return_invalid_request_response(str(v))
         except Exception as e:
-            return utils.get_lambda_response(400, str(e))
+            return self._responder.return_internal_server_error_response(str(e))
 
         return_property = PropertyResponseModel(**response)
-        return utils.get_lambda_response(
-            200, json.dumps(return_property.convert_to_dictionary(), default=str)
+        return self._responder.return_success_response(
+            return_property.convert_to_dictionary()
         )
 
     def update_property_ratings(
         self, property_id, review: ReviewModel, update_function=operator.add
     ):
         review_property_response = self.get_property_by_id(property_id)
-        if review_property_response["statusCode"] != 200:
+        if review_property_response.statusCode != 200:
             return review_property_response
 
-        review_property_data = json.loads(review_property_response["body"])
+        review_property_data = json.loads(review_property_response.body)
         review_property = PropertyRequestModel(**review_property_data)
 
         try:
             review_property.update_property_ratings(review, update_function)
 
             put_property_args = {"ConditionExpression": "attribute_exists(itemId)"}
-            response = self.DBClient.update_item(
+            response = self._dbclient.update_item(
                 review_property.itemId,
                 review_property.dataSelector,
                 "set facilitiesRating=:fr, locationRating=:lr, managementRating=:mr, reviewCount=:rc, overallRating=:or",
@@ -124,12 +133,14 @@ class RevletPropertyService:
                 },
                 put_property_args,
             )
+        except ValueError as v:
+            return self._responder.return_invalid_request_response(str(v))
         except Exception as e:
-            return utils.get_lambda_response(400, str(e))
+            return self._responder.return_internal_server_error_response(str(e))
 
         return_property = PropertyResponseModel(**response)
-        return utils.get_lambda_response(
-            200, json.dumps(return_property.convert_to_dictionary(), default=str)
+        return self._responder.return_success_response(
+            return_property.convert_to_dictionary()
         )
 
     def delete_property(self, property_id):
@@ -138,13 +149,17 @@ class RevletPropertyService:
         }
 
         if not utils.validate_property_id(property_id):
-            return utils.get_lambda_response(400, "Invalid property ID")
+            return self._responder.return_invalid_request_response(
+                "Invalid property ID"
+            )
 
         try:
             meta_key = utils.get_metadata_key_from_item_id(property_id)
-            response = self.DBClient.delete_item(property_id, meta_key, args)
+            response = self._dbclient.delete_item(property_id, meta_key, args)
 
+        except ValueError as v:
+            return self._responder.return_invalid_request_response(str(v))
         except Exception as e:
-            return utils.get_lambda_response(400, str(e))
+            return self._responder.return_internal_server_error_response(str(e))
 
-        return utils.get_lambda_response(200, json.dumps(response, default=str))
+        return self._responder.return_success_response(response)

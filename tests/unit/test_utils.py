@@ -13,7 +13,6 @@ class TestValidateId:
 
     def test_valid_review_key(self):
         test_key = "REVIEW#{}".format(TEST_ID)
-        print(test_key)
         result = validate_id(test_key, id_type="REVIEW")
 
         assert result == True

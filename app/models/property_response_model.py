@@ -15,3 +15,4 @@ class PropertyResponseModel(PropertyServiceItem):
         self.facilitiesRating = details.get("facilitieRating", 0)
         self.locationRating = details.get("locatioRating", 0)
         self.managementRating = details.get("managmentRating", 0)
+        self.reviewCount = details.get("reviewCount", 0)

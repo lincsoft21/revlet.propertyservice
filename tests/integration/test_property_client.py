@@ -1,5 +1,6 @@
 import json
 import os
+from responders.lambda_responder import LambdaResponder
 from models.property_request_model import PropertyRequestModel
 import boto3
 import pytest
@@ -17,7 +18,8 @@ TEST_TABLE_NAME = "revlet-propertyservice-{}-db".format(
 db_client = DynamoClient(
     TEST_TABLE_NAME, "eu-west-2", {"endpoint_url": "http://localhost:8000"}
 )
-TEST_PROPERTYSERVICE_CLIENT = RevletPropertyService(db_client)
+test_responder = LambdaResponder()
+TEST_PROPERTYSERVICE_CLIENT = RevletPropertyService(db_client, test_responder)
 
 TEST_PROPERTY_POSTCODE = "AB1 2CD"
 TEST_PROPERTY_STREET_NAME = "123 Steet"
@@ -39,9 +41,9 @@ def setup():
         BillingMode="PAY_PER_REQUEST",
     )
     test_utils.add_test_property(
-        TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE, TEST_PROPERTY
+        TEST_PROPERTYSERVICE_CLIENT._dbclient.PROPERTYSERVICE_TABLE, TEST_PROPERTY
     )
-    yield TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE
+    yield TEST_PROPERTYSERVICE_CLIENT._dbclient.PROPERTYSERVICE_TABLE
     ddb_client.delete_table(TableName=TEST_TABLE_NAME)
 
 
@@ -50,35 +52,35 @@ class TestGetPropertyService:
         postcode_hash = TEST_PROPERTY.itemId.split("#")[0]
         response = TEST_PROPERTYSERVICE_CLIENT.get_properties_by_postcode(postcode_hash)
 
-        data = json.loads(response["body"])
-        assert response["statusCode"] == 200
+        data = json.loads(response.body)
+        assert response.statusCode == 200
         assert data[0]["postcode"] == TEST_PROPERTY_POSTCODE
         assert len(data) == 1
 
     def test_get_properties_by_id(self):
         response = TEST_PROPERTYSERVICE_CLIENT.get_property_by_id(TEST_PROPERTY.itemId)
 
-        data = json.loads(response["body"])
-        assert response["statusCode"] == 200
+        data = json.loads(response.body)
+        assert response.statusCode == 200
         assert data["postcode"] == TEST_PROPERTY_POSTCODE
         assert data["streetName"] == TEST_PROPERTY_STREET_NAME
 
     def test_get_properties_by_postcode_with_invalid_postcode(self):
         response = TEST_PROPERTYSERVICE_CLIENT.get_properties_by_postcode("12345")
 
-        assert response["statusCode"] == 400
+        assert response.statusCode == 400
 
     def test_get_property_by_id_with_invalid_values(self):
         response = TEST_PROPERTYSERVICE_CLIENT.get_property_by_id("12345")
 
-        assert response["statusCode"] == 400
+        assert response.statusCode == 400
 
     def test_get_property_by_id_that_does_not_exist(self):
         invalid_hash = test_utils.get_invalid_test_hash()
         invalid_property_id = "{}#{}".format(invalid_hash, invalid_hash)
         response = TEST_PROPERTYSERVICE_CLIENT.get_property_by_id(invalid_property_id)
 
-        assert response["statusCode"] == 404
+        assert response.statusCode == 404
 
 
 class TestPostPropertyService:
@@ -86,11 +88,11 @@ class TestPostPropertyService:
         request_body = {"postcode": "TE1 2ST", "streetName": "1 Test Property"}
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
-        assert response["statusCode"] == 200
+        assert response.statusCode == 200
 
         # Validate property creation
         test_property = test_utils.get_test_property(
-            TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTYSERVICE_CLIENT._dbclient.PROPERTYSERVICE_TABLE,
             request_body["postcode"],
             request_body["streetName"],
         )
@@ -105,11 +107,11 @@ class TestPostPropertyService:
         }
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
-        assert response["statusCode"] == 200
+        assert response.statusCode == 200
 
         # Validate property creation
         test_property = test_utils.get_test_property(
-            TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTYSERVICE_CLIENT._dbclient.PROPERTYSERVICE_TABLE,
             request_body["postcode"],
             request_body["streetName"],
         )
@@ -121,11 +123,11 @@ class TestPostPropertyService:
         request_body = {"postcode": "YZ9 1BA", "streetName": TEST_PROPERTY_STREET_NAME}
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
-        assert response["statusCode"] == 200
+        assert response.statusCode == 200
 
         # Validate property creation
         test_property = test_utils.get_test_property(
-            TEST_PROPERTYSERVICE_CLIENT.DBClient.PROPERTYSERVICE_TABLE,
+            TEST_PROPERTYSERVICE_CLIENT._dbclient.PROPERTYSERVICE_TABLE,
             request_body["postcode"],
             request_body["streetName"],
         )
@@ -140,7 +142,7 @@ class TestPostPropertyService:
         }
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
-        assert response["statusCode"] == 400
+        assert response.statusCode == 400
 
     # It should not allow property with same details with difference casing
     def test_post_property_with_same_details_different_casing(self):
@@ -152,13 +154,13 @@ class TestPostPropertyService:
         }
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
-        assert response["statusCode"] == 400
+        assert response.statusCode == 400
 
     def test_post_property_with_invalid_postcode(self):
         request_body = {"postcode": "12345", "streetName": TEST_PROPERTY_STREET_NAME}
         response = TEST_PROPERTYSERVICE_CLIENT.post_property(request_body)
 
-        assert response["statusCode"] == 400
+        assert response.statusCode == 400
 
 
 class TestPutPropertyService:
@@ -169,9 +171,8 @@ class TestPutPropertyService:
             request_body,
         )
 
-        print(response)
-        data = json.loads(response["body"])
-        assert response["statusCode"] == 200
+        data = json.loads(response.body)
+        assert response.statusCode == 200
         assert int(data["rooms"]) == 4
         assert bool(data["garden"]) == False
 
@@ -185,8 +186,8 @@ class TestPutPropertyService:
             invalid_hash, request_body
         )
 
-        assert response["statusCode"] == 400
-        assert response["body"] == "Invalid property ID"
+        assert response.statusCode == 400
+        assert response.body == "Invalid property ID"
 
     def test_put_property_with_property_that_does_not_exist(self):
         invalid_hash = test_utils.get_invalid_test_hash()
@@ -197,7 +198,7 @@ class TestPutPropertyService:
             property_id, request_body
         )
 
-        assert response["statusCode"] == 400
+        assert response.statusCode == 400
 
 
 class TestDeletePropertyService:
@@ -206,14 +207,14 @@ class TestDeletePropertyService:
             TEST_PROPERTY.itemId,
         )
 
-        data = json.loads(response["body"])
-        assert response["statusCode"] == 200
+        data = json.loads(response.body)
+        assert response.statusCode == 200
         assert data["streetName"] == TEST_PROPERTY_STREET_NAME
 
     def test_delete_property_with_invalid_id(self):
         response = TEST_PROPERTYSERVICE_CLIENT.delete_property("1234")
 
-        assert response["statusCode"] == 400
+        assert response.statusCode == 400
 
     def test_delete_property_with_property_that_does_not_exist(self):
         invalid_hash = test_utils.get_invalid_test_hash()
@@ -221,4 +222,4 @@ class TestDeletePropertyService:
 
         response = TEST_PROPERTYSERVICE_CLIENT.delete_property(property_id)
 
-        assert response["statusCode"] == 400
+        assert response.statusCode == 400

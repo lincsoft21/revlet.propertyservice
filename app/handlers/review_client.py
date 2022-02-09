@@ -1,76 +1,90 @@
-from models.property_response_model import PropertyResponseModel
+from responders.lambda_responder import LambdaResponder
 from handlers.property_client import RevletPropertyService
 from models.review_request_model import ReviewModel
 from data.dynamo_client import DynamoClient
-from models.property_request_model import PropertyRequestModel
 import utils
 import json
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Key
 import operator
 
 
 class RevletReviewService:
-    def __init__(self, db_client: DynamoClient):
-        self.DBClient = db_client
-        self.PropertyClient = RevletPropertyService(db_client)
+    def __init__(self, db_client: DynamoClient, responder: LambdaResponder):
+        self._dbclient = db_client
+        self._propertyclient = RevletPropertyService(db_client, responder)
+        self._responder = responder
 
     def get_reviews(self, property_id):
         if not utils.validate_property_id(property_id):
-            return utils.get_lambda_response(400, "Invalid property ID")
+            return self._responder.return_invalid_request_response(
+                "Invalid property ID"
+            )
 
         try:
             query = Key("itemId").eq(property_id) & Key("dataSelector").begins_with(
                 "REV#"
             )
-            response = self.DBClient.query_items(query)
+            response = self._dbclient.query_items(query)
         except Exception as e:
-            return utils.get_lambda_response(500, str(e))
+            return self._responder.return_internal_server_error_response(str(e))
 
-        return utils.get_lambda_response(200, json.dumps(response, default=str))
+        return self._responder.return_success_response(response)
 
     def post_review(self, property_id, body):
         if not utils.validate_property_id(property_id):
-            return utils.get_lambda_response(400, "Invalid property ID")
+            return self._responder.return_invalid_request_response(
+                "Invalid property ID"
+            )
 
         try:
             new_review = ReviewModel(property_id, **body)
             if not new_review.validate_review_tenancy_dates():
-                return utils.get_lambda_response(400, "Invalid tenancy dates")
+                return self._responder.return_invalid_request_response(
+                    "Invalid tenancy dates"
+                )
 
-            response = self.PropertyClient.update_property_ratings(
+            response = self._propertyclient.update_property_ratings(
                 property_id, new_review
             )
-            if response["statusCode"] != 200:
+            if response.statusCode != 200:
                 return response
 
             post_review_args = {
-                "ConditionExpression": "attribute_not_exists(data_selector)"
+                "ConditionExpression": "attribute_not_exists(dataSelector)"
             }
 
             # Create new review in database
-            self.DBClient.post_item(
+            self._dbclient.post_item(
                 new_review.convert_to_dictionary(), post_review_args
             )
 
+        except ValueError as v:
+            return self._responder.return_invalid_request_response(str(v))
         except Exception as e:
-            return utils.get_lambda_response(500, str(e))
+            return self._responder.return_internal_server_error_response(str(e))
 
-        return utils.get_lambda_response(200, "{} Created".format(new_review.itemId))
+        return self._responder.return_success_response(
+            "{} Created".format(new_review.dataSelector)
+        )
 
-    def delete_review(self, property_id, review_hash):
-        review_key = "REV#{}".format(review_hash)
-        # args = {"ConditionExpression": "attribute_exists(data_selector)"}
+    def delete_review(self, property_id, review_key):
+        if not utils.validate_review_key(review_key):
+            return self._responder.return_invalid_request_response("Invalid review key")
+
+        args = {"ConditionExpression": "attribute_exists(dataSelector)"}
         try:
-            delete_response = self.DBClient.delete_item(property_id, review_key)
+            delete_response = self._dbclient.delete_item(property_id, review_key, args)
 
             # Update property to remove ratings
             delete_review = ReviewModel(**delete_response)
-            response = self.PropertyClient.update_property_ratings(
+            response = self._propertyclient.update_property_ratings(
                 property_id, delete_review, operator.sub
             )
-            if response["statusCode"] != 200:
-                return response
+            if response.statusCode != 200:
+                raise Exception("Failed to update property ratings")
+        except ValueError as v:
+            return self._responder.return_invalid_request_response(str(v))
         except Exception as e:
-            return utils.get_lambda_response(400, str(e))
+            return self._responder.return_internal_server_error_response(str(e))
 
-        return utils.get_lambda_response(200, json.dumps(delete_response, default=str))
+        return self._responder.return_success_response(delete_response)

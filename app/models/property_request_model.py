@@ -14,15 +14,15 @@ class PropertyRequestModel(PropertyServiceItem):
 
         super().__init__(self.get_item_id(), self.get_data_selector())
 
-        self.rooms = details.get("rooms", 0)
-        self.parking = details.get("parking", False)
-        self.garden = details.get("garden", False)
+        self.rooms = int(details.get("rooms", 0))
+        self.parking = bool(details.get("parking", False))
+        self.garden = bool(details.get("garden", False))
 
-        self.overallRating = details.get("overallTotal", 0)
-        self.facilitiesRating = details.get("facilitiesTotal", 0)
-        self.locationRating = details.get("locationTotal", 0)
-        self.managementRating = details.get("managementTotal", 0)
-        self.reviewCount = details.get("reviewCount", 0)
+        self.overallRating = int(details.get("overallTotal", 0))
+        self.facilitiesRating = int(details.get("facilitiesTotal", 0))
+        self.locationRating = int(details.get("locationTotal", 0))
+        self.managementRating = int(details.get("managementTotal", 0))
+        self.reviewCount = int(details.get("reviewCount", 0))
 
     def get_item_id(self):
         postcode_hash = self.get_postcode_hash()
@@ -64,11 +64,11 @@ class PropertyRequestModel(PropertyServiceItem):
         # Increase or decrease review count
         self.reviewCount = update_function(self.reviewCount, 1)
 
-        self.overallRating = math.floor((
-            self.locationRating + self.managementRating + self.facilitiesRating
-        ) / 3)
+        self.overallRating = math.floor(
+            (self.locationRating + self.managementRating + self.facilitiesRating) / 3
+        )
 
-    def update_rating(self, current_rating, updated_rating, update_function):
+    def update_rating(self, current_rating: int, updated_rating: int, update_function):
         if update_function(self.reviewCount, 1) <= 0:
             return 0
         current_total = current_rating * self.reviewCount

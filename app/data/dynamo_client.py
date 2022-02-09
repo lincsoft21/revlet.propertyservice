@@ -26,9 +26,7 @@ class DynamoClient:
                 KeyConditionExpression=query, **args
             )
         except ClientError as e:
-            raise Exception(
-                "Failed to get items: {}".format(e.response["Error"]["Message"])
-            )
+            raise Exception("Failed to query item")
 
         return result["Items"]
 
@@ -36,10 +34,9 @@ class DynamoClient:
         try:
             self.PROPERTYSERVICE_TABLE.put_item(Item=body, **args)
         except ClientError as e:
-            print(e)
-            raise Exception(
-                "Failed to create item: {}".format(e.response["Error"]["Message"])
-            )
+            if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+                raise ValueError("Item already exists")
+            raise Exception("Failed to create new item")
 
     def update_item(
         self,
@@ -59,9 +56,9 @@ class DynamoClient:
                 **args,
             )
         except ClientError as e:
-            raise Exception(
-                "Failed to update item: {}".format(e.response["Error"]["Message"])
-            )
+            if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+                raise ValueError("Item does not exist")
+            raise Exception("Failed to update item")
 
         return response["Attributes"]
 
@@ -75,11 +72,10 @@ class DynamoClient:
                 ReturnValues="ALL_OLD",
                 **args,
             )
-            print(response)
         except ClientError as e:
-            raise Exception(
-                "Failed to delete item: {}".format(e.response["Error"]["Message"])
-            )
+            if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+                raise ValueError("Item does not exist")
+            raise Exception("Failed to delete item")
 
         return response["Attributes"]
 

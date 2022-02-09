@@ -48,6 +48,9 @@ def validate_property_id(id):
     result = re.match(r"^\w{10}#\w{10}$", id)
     return result != None
 
+def validate_review_key(key):
+    result = re.match(r"^REV#\w{10}$", key)
+    return result != None
 
 def get_metadata_key_from_item_id(id):
     key_hashes = id.split("#")
