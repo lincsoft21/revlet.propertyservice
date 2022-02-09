@@ -46,7 +46,7 @@ class RevletReviewService:
             response = self._propertyclient.update_property_ratings(
                 property_id, new_review
             )
-            if response.statusCode != 200:
+            if response["statusCode"] != 200:
                 return response
 
             post_review_args = {
@@ -80,7 +80,7 @@ class RevletReviewService:
             response = self._propertyclient.update_property_ratings(
                 property_id, delete_review, operator.sub
             )
-            if response.statusCode != 200:
+            if response["statusCode"] != 200:
                 raise Exception("Failed to update property ratings")
         except ValueError as v:
             return self._responder.return_invalid_request_response(str(v))

@@ -110,10 +110,10 @@ class RevletPropertyService:
         self, property_id, review: ReviewModel, update_function=operator.add
     ):
         review_property_response = self.get_property_by_id(property_id)
-        if review_property_response.statusCode != 200:
+        if review_property_response["statusCode"] != 200:
             return review_property_response
 
-        review_property_data = json.loads(review_property_response.body)
+        review_property_data = json.loads(review_property_response["body"])
         review_property = PropertyRequestModel(**review_property_data)
 
         try:
