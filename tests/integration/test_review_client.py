@@ -69,8 +69,8 @@ class TestGetReviewService:
     def test_get_all_reviews(self):
         response = TEST_CLIENT.get_reviews(TEST_PROPERTY.itemId)
 
-        data = json.loads(response.body)
-        assert response.statusCode == 200
+        data = json.loads(response["body"])
+        assert response["statusCode"] == 200
         assert data[0]["title"] == TEST_REVIEW_DETAILS["title"]
         assert len(data) == 1
 
@@ -79,42 +79,42 @@ class TestGetReviewService:
         invalid_property_id = "{}#{}".format(invalid_hash, invalid_hash)
         response = TEST_CLIENT.get_reviews(invalid_property_id)
 
-        data = json.loads(response.body)
-        assert response.statusCode == 200
+        data = json.loads(response["body"])
+        assert response["statusCode"] == 200
         assert len(data) == 0
 
     def test_get_review_with_invalid_id(self):
         response = TEST_CLIENT.get_reviews("12345")
 
-        assert response.statusCode == 400
-        assert response.body == "Invalid property ID"
+        assert response["statusCode"] == 400
+        assert response["body"] == "Invalid property ID"
 
 
 class TestPostReviewService:
     def test_post_review(self):
         response = TEST_CLIENT.post_review(TEST_PROPERTY.itemId, TEST_REVIEW_DETAILS)
 
-        assert response.statusCode == 200
+        assert response["statusCode"] == 200
 
     def test_post_review_with_invalid_property_key(self):
         invalid_hash = test_utils.get_invalid_test_hash()
         response = TEST_CLIENT.post_review(invalid_hash, TEST_REVIEW_DETAILS)
 
-        assert response.statusCode == 400
+        assert response["statusCode"] == 400
 
     def test_post_review_for_property_that_does_not_exist(self):
         invalid_hash = test_utils.get_invalid_test_hash()
         invalid_property_id = "{}#{}".format(invalid_hash, invalid_hash)
         response = TEST_CLIENT.post_review(invalid_property_id, TEST_REVIEW_DETAILS)
 
-        assert response.statusCode == 404
+        assert response["statusCode"] == 404
 
     def test_post_review_with_invalid_tenancy_dates(self):
         invalid_review = TEST_REVIEW_DETAILS
         invalid_review["tenancyEndDate"] = "01-1999"
         response = TEST_CLIENT.post_review(TEST_PROPERTY.itemId, invalid_review)
 
-        assert response.statusCode == 400
+        assert response["statusCode"] == 400
 
 
 class TestDeleteReviewService:
@@ -123,12 +123,12 @@ class TestDeleteReviewService:
             TEST_PROPERTY.itemId,
             TEST_REVIEW.dataSelector,
         )
-        data = json.loads(response.body)
-        assert response.statusCode == 200
+        data = json.loads(response["body"])
+        assert response["statusCode"] == 200
         assert data["title"] == TEST_REVIEW_DETAILS["title"]
 
     def test_delete_review_that_does_not_exist(self):
         invalid_hash = test_utils.get_invalid_test_hash()
         response = TEST_CLIENT.delete_review(TEST_PROPERTY.itemId, invalid_hash)
 
-        assert response.statusCode == 400
+        assert response["statusCode"] == 400
