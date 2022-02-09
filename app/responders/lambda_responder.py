@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import json
 
 
@@ -17,13 +17,13 @@ class LambdaResponder:
         if not type(body) == type(str):
             response_body = json.dumps(body, default=str)
 
-        return LambdaResponse(response_body, 200)
+        return asdict(LambdaResponse(response_body, 200))
 
     def return_internal_server_error_response(self, error):
-        return LambdaResponse(error, 500)
+        return asdict(LambdaResponse(error, 500))
 
     def return_not_found_response(self, error):
-        return LambdaResponse(error, 404)
+        return asdict(LambdaResponse(error, 404))
 
     def return_invalid_request_response(self, error):
-        return LambdaResponse(error, 400)
+        return asdict(LambdaResponse(error, 400))
