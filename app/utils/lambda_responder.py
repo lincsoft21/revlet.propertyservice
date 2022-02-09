@@ -7,8 +7,11 @@ class LambdaResponse:
 
 
 class LambdaResponder:
-    def GetSuccessResponse(self):
+    def SuccessResponse(self):
         pass
 
-    def GetInternalServerErrorResponse(self, error):
+    def InternalServerErrorResponse(self, error):
         pass
+
+    def InvalidResponse(self):
+      pass
