@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass
+from pickletools import float8
 from utils import clean_input, get_key_hash
 import re
 from models.data_item import DataItem
@@ -19,10 +20,10 @@ class PropertyModel(DataItem):
     garden: bool = False
     parking: bool = False
 
-    overallRating: int = 0
-    locationRating: int = 0
-    managementRating: int = 0
-    facilitiesRating: int = 0
+    overallRating: float = 0
+    locationRating: float = 0
+    managementRating: float = 0
+    facilitiesRating: float = 0
     reviewCount: int = 0
 
     dateCreated: str = str(date.today())
@@ -99,14 +100,11 @@ class Property:
         # Increase or decrease review count
         self.property.reviewCount = update_function(self.property.reviewCount, 1)
 
-        self.property.overallRating = math.floor(
-            (
-                self.property.locationRating
-                + self.property.managementRating
-                + self.property.facilitiesRating
-            )
-            / 3
-        )
+        self.property.overallRating = (
+            self.property.locationRating
+            + self.property.managementRating
+            + self.property.facilitiesRating
+        ) / 3
 
     def update_rating(self, current_rating: int, updated_rating: int, update_function):
         if update_function(self.property.reviewCount, 1) <= 0:
@@ -117,4 +115,4 @@ class Property:
             self.property.reviewCount, 1
         )
 
-        return math.floor(average)
+        return average
