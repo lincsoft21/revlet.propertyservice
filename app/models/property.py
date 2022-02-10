@@ -28,6 +28,16 @@ class PropertyModel(DataItem):
     dateCreated: str = str(date.today())
 
 
+@dataclass
+class PropertyRequestModel:
+    postcode: str
+    streetName: str
+
+    rooms: int = 0
+    garden: bool = False
+    parking: bool = False
+
+
 class Property:
     def __init__(self, postcode, streetName, **details):
         details["itemID"] = details.get(

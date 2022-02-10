@@ -1,4 +1,4 @@
-from models.property import Property, PropertyModel
+from models.property import Property, PropertyModel, PropertyRequestModel
 from responders.lambda_responder import LambdaResponder
 from models.review import ReviewModel
 from data.dynamo_client import DynamoClient
@@ -51,7 +51,8 @@ class RevletPropertyService:
         return self._responder.return_success_response(asdict(return_property))
 
     def post_property(self, body):
-        new_property = Property(**body)
+        new_property_request = PropertyRequestModel(**body)
+        new_property = Property(**asdict(new_property_request))
         if not new_property.validate_item():
             return self._responder.return_invalid_request_response("Invalid property")
 
