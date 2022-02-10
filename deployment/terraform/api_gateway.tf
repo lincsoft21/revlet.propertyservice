@@ -1,5 +1,5 @@
 locals {
-  models    = ["property", "review", "propertydetails"]
+  models    = ["property", "review", "PropertyDetails"]
   function_method_map = {
     get_properties = {
       method     = "GET"
