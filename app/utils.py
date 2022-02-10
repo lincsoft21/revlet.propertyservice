@@ -7,10 +7,10 @@ def validate_query_params(param, event):
     if not "queryStringParameters" in event:
         return False
 
-    if param in event["queryStringParameters"]:
-        return True
+    if not param in event["queryStringParameters"]:
+        return False
 
-    return False
+    return True
 
 
 # Validate postcode follows UK postcode format
