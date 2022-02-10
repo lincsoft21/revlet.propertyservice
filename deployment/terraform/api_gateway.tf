@@ -139,6 +139,18 @@ resource "aws_api_gateway_resource" "propertyservice_gateway_properties_resource
   rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id
 }
 
+resource "aws_api_gateway_resource" "propertyservice_gateway_id_resource" {
+  path_part = "{id}"
+  parent_id = aws_api_gateway_resource.propertyservice_gateway_properties_resource["properties"].id
+  rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id
+}
+
+resource "aws_api_gateway_resource" "propertyservice_gateway_review_resource" {
+  path_part = "{reviewId}"
+  parent_id = aws_api_gateway_resource.propertyservice_gateway_properties_resource["reviews"].id
+  rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id
+}
+
 resource "aws_api_gateway_method" "propertyservice_method" {
   for_each         = local.function_method_map
   rest_api_id      = aws_api_gateway_rest_api.propertyservice_api.id
