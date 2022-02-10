@@ -51,11 +51,16 @@ class RevletPropertyService:
         return self._responder.return_success_response(asdict(return_property))
 
     def post_property(self, body):
-        new_property_request = PropertyRequestModel(**body)
-        new_property = Property(**asdict(new_property_request))
+        try:
+            new_property_request = PropertyRequestModel(**body)
+            new_property = Property(**asdict(new_property_request))
+        except Exception as e:
+            return self._responder.return_invalid_request_response(
+                "Invalid property request"
+            )
+
         if not new_property.validate_item():
             return self._responder.return_invalid_request_response("Invalid property")
-
         args = {"ConditionExpression": "attribute_not_exists(dataSelector)"}
 
         try:
