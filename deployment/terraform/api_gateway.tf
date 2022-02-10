@@ -139,13 +139,38 @@ resource "aws_api_gateway_resource" "propertyservice_gateway_properties_resource
   rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id
 }
 
-resource "aws_api_gateway_resource" "propertyservice_gateway_id_resource" {
+# resource "aws_api_gateway_resource" "propertyservice_gateway_test_property_resources" {
+#   count    = length(local.property_resources)
+#   path_part   = local.property_resources[count.index]
+#   parent_id   = count.index == 0 ? aws_api_gateway_rest_api.propertyservice_api.root_resource_id : element(aws_api_gateway_resource.propertyservice_gateway_test_property_resources.*.id, count.index - 1)
+#   rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id
+# }
+
+resource "aws_api_gateway_resource" "propertyservice_gateway_property_id_resource" {
   path_part = "{id}"
   parent_id = aws_api_gateway_resource.propertyservice_gateway_properties_resource["properties"].id
   rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id
 }
 
+resource "aws_api_gateway_method" "test_method" {
+  rest_api_id      = aws_api_gateway_rest_api.propertyservice_api.id
+  resource_id      = aws_api_gateway_resource.propertyservice_gateway_property_id_resource.id
+  http_method      = "GET"
+
+  authorization = "NONE"
+
+  request_parameters = {
+    "method.request.path.id" = true
+  }
+}
+
 resource "aws_api_gateway_resource" "propertyservice_gateway_review_resource" {
+  path_part = "reviews"
+  parent_id = aws_api_gateway_resource.propertyservice_gateway_property_id_resource.id
+  rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id
+}
+
+resource "aws_api_gateway_resource" "propertyservice_gateway_review_id_resource" {
   path_part = "{reviewId}"
   parent_id = aws_api_gateway_resource.propertyservice_gateway_properties_resource["reviews"].id
   rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id

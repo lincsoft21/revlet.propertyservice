@@ -28,6 +28,10 @@ def get_properties(event, context):
     return _responder.return_invalid_request_response("Missing property details")
 
 
+def get_property_by_id(event, context):
+    return _propertyhandler.get_property_by_id(event["pathParameters"]["id"])
+
+
 def post_property(event, context):
     data = json.loads(event["body"])
     return _propertyhandler.post_property(data)
