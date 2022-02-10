@@ -1,9 +1,9 @@
+from models.property import Property, PropertyModel
 from responders.lambda_responder import LambdaResponder
-from models.review_request_model import ReviewModel
-from models.property_request_model import PropertyRequestModel
+from models.review import ReviewModel
 from data.dynamo_client import DynamoClient
-from models.property_response_model import PropertyResponseModel
 from boto3.dynamodb.conditions import Key, Attr
+from dataclasses import asdict
 import json
 import utils
 import operator
@@ -20,7 +20,7 @@ class RevletPropertyService:
 
         try:
             args = {
-                "FilterExpression": Key("itemId").begins_with(postcode_hash)
+                "FilterExpression": Key("itemID").begins_with(postcode_hash)
                 & Key("dataSelector").begins_with("META#")
             }
             response = self._dbclient.get_all_items(args)
@@ -37,7 +37,7 @@ class RevletPropertyService:
             )
 
         try:
-            query = Key("itemId").eq(property_id) & Key("dataSelector").begins_with(
+            query = Key("itemID").eq(property_id) & Key("dataSelector").begins_with(
                 "META#"
             )
             response = self._dbclient.query_items(query)
@@ -47,21 +47,19 @@ class RevletPropertyService:
         if len(response) == 0:
             return self._responder.return_not_found_response("Property not found")
 
-        return_property = PropertyResponseModel(**response[0])
-        return self._responder.return_success_response(
-            return_property.convert_to_dictionary()
-        )
+        return_property = PropertyModel(**response[0])
+        return self._responder.return_success_response(asdict(return_property))
 
     def post_property(self, body):
-        new_property = PropertyRequestModel(**body)
-        if not new_property.validate_property_postcode():
-            return self._responder.return_invalid_request_response("Invalid postcode")
+        new_property = Property(**body)
+        if not new_property.validate_item():
+            return self._responder.return_invalid_request_response("Invalid property")
 
         args = {"ConditionExpression": "attribute_not_exists(dataSelector)"}
 
         try:
             self._dbclient.post_item(
-                new_property.convert_to_dictionary(),
+                new_property.response_object(),
                 args,
             )
         except ValueError as v:
@@ -70,12 +68,12 @@ class RevletPropertyService:
             return self._responder.return_internal_server_error_response(str(e))
 
         return self._responder.return_success_response(
-            "{} Created".format(new_property.itemId)
+            "{} Created".format(new_property.property.itemID)
         )
 
     def update_property_details(self, property_id, body):
         args = {
-            "ConditionExpression": "attribute_exists(itemId)",
+            "ConditionExpression": "attribute_exists(itemID)",
         }
 
         if not utils.validate_property_id(property_id):
@@ -101,10 +99,8 @@ class RevletPropertyService:
         except Exception as e:
             return self._responder.return_internal_server_error_response(str(e))
 
-        return_property = PropertyResponseModel(**response)
-        return self._responder.return_success_response(
-            return_property.convert_to_dictionary()
-        )
+        return_property = PropertyModel(**response)
+        return self._responder.return_success_response(asdict(return_property))
 
     def update_property_ratings(
         self, property_id, review: ReviewModel, update_function=operator.add
@@ -114,22 +110,22 @@ class RevletPropertyService:
             return review_property_response
 
         review_property_data = json.loads(review_property_response["body"])
-        review_property = PropertyRequestModel(**review_property_data)
+        review_property = Property(**review_property_data)
 
         try:
             review_property.update_property_ratings(review, update_function)
 
-            put_property_args = {"ConditionExpression": "attribute_exists(itemId)"}
+            put_property_args = {"ConditionExpression": "attribute_exists(itemID)"}
             response = self._dbclient.update_item(
-                review_property.itemId,
-                review_property.dataSelector,
+                review_property.property.itemID,
+                review_property.property.dataSelector,
                 "set facilitiesRating=:fr, locationRating=:lr, managementRating=:mr, reviewCount=:rc, overallRating=:or",
                 {
-                    ":fr": int(review_property.facilitiesRating),
-                    ":lr": int(review_property.locationRating),
-                    ":mr": int(review_property.managementRating),
-                    ":or": int(review_property.overallRating),
-                    ":rc": int(review_property.reviewCount),
+                    ":fr": int(review_property.property.facilitiesRating),
+                    ":lr": int(review_property.property.locationRating),
+                    ":mr": int(review_property.property.managementRating),
+                    ":or": int(review_property.property.overallRating),
+                    ":rc": int(review_property.property.reviewCount),
                 },
                 put_property_args,
             )
@@ -138,14 +134,12 @@ class RevletPropertyService:
         except Exception as e:
             return self._responder.return_internal_server_error_response(str(e))
 
-        return_property = PropertyResponseModel(**response)
-        return self._responder.return_success_response(
-            return_property.convert_to_dictionary()
-        )
+        return_property = PropertyModel(**response)
+        return self._responder.return_success_response(asdict(return_property))
 
     def delete_property(self, property_id):
         args = {
-            "ConditionExpression": "attribute_exists(itemId)",
+            "ConditionExpression": "attribute_exists(itemID)",
         }
 
         if not utils.validate_property_id(property_id):
@@ -162,4 +156,5 @@ class RevletPropertyService:
         except Exception as e:
             return self._responder.return_internal_server_error_response(str(e))
 
-        return self._responder.return_success_response(response)
+        return_deleted_property = PropertyModel(**response)
+        return self._responder.return_success_response(asdict(return_deleted_property))

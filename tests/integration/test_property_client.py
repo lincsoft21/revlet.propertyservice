@@ -1,7 +1,7 @@
 import json
 import os
 from responders.lambda_responder import LambdaResponder
-from models.property_request_model import PropertyRequestModel
+from models.property import Property
 import boto3
 import pytest
 import test_utils
@@ -23,7 +23,7 @@ TEST_PROPERTYSERVICE_CLIENT = RevletPropertyService(db_client, test_responder)
 
 TEST_PROPERTY_POSTCODE = "AB1 2CD"
 TEST_PROPERTY_STREET_NAME = "123 Steet"
-TEST_PROPERTY = PropertyRequestModel(TEST_PROPERTY_POSTCODE, TEST_PROPERTY_STREET_NAME)
+TEST_PROPERTY = Property(TEST_PROPERTY_POSTCODE, TEST_PROPERTY_STREET_NAME)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -31,17 +31,18 @@ def setup():
     db_client.DYNAMO_CLIENT.create_table(
         TableName=TEST_TABLE_NAME,
         AttributeDefinitions=[
-            {"AttributeName": "itemId", "AttributeType": "S"},
+            {"AttributeName": "itemID", "AttributeType": "S"},
             {"AttributeName": "dataSelector", "AttributeType": "S"},
         ],
         KeySchema=[
-            {"AttributeName": "itemId", "KeyType": "HASH"},
+            {"AttributeName": "itemID", "KeyType": "HASH"},
             {"AttributeName": "dataSelector", "KeyType": "RANGE"},
         ],
         BillingMode="PAY_PER_REQUEST",
     )
     test_utils.add_test_property(
-        TEST_PROPERTYSERVICE_CLIENT._dbclient.PROPERTYSERVICE_TABLE, TEST_PROPERTY
+        TEST_PROPERTYSERVICE_CLIENT._dbclient.PROPERTYSERVICE_TABLE,
+        TEST_PROPERTY.property,
     )
     yield TEST_PROPERTYSERVICE_CLIENT._dbclient.PROPERTYSERVICE_TABLE
     ddb_client.delete_table(TableName=TEST_TABLE_NAME)
@@ -49,7 +50,7 @@ def setup():
 
 class TestGetPropertyService:
     def test_get_properties_by_postcode(self):
-        postcode_hash = TEST_PROPERTY.itemId.split("#")[0]
+        postcode_hash = TEST_PROPERTY.property.itemID.split("#")[0]
         response = TEST_PROPERTYSERVICE_CLIENT.get_properties_by_postcode(postcode_hash)
 
         data = json.loads(response["body"])
@@ -58,7 +59,9 @@ class TestGetPropertyService:
         assert len(data) == 1
 
     def test_get_properties_by_id(self):
-        response = TEST_PROPERTYSERVICE_CLIENT.get_property_by_id(TEST_PROPERTY.itemId)
+        response = TEST_PROPERTYSERVICE_CLIENT.get_property_by_id(
+            TEST_PROPERTY.property.itemID
+        )
 
         data = json.loads(response["body"])
         assert response["statusCode"] == 200
@@ -167,7 +170,7 @@ class TestPutPropertyService:
     def test_put_property(self):
         request_body = {"rooms": 4, "parking": True, "garden": False}
         response = TEST_PROPERTYSERVICE_CLIENT.update_property_details(
-            TEST_PROPERTY.itemId,
+            TEST_PROPERTY.property.itemID,
             request_body,
         )
 
@@ -204,7 +207,7 @@ class TestPutPropertyService:
 class TestDeletePropertyService:
     def test_delete_property(self):
         response = TEST_PROPERTYSERVICE_CLIENT.delete_property(
-            TEST_PROPERTY.itemId,
+            TEST_PROPERTY.property.itemID,
         )
 
         data = json.loads(response["body"])

@@ -1,4 +1,4 @@
-from models.db_item import PropertyServiceItem
+from models.data_item import DataItem
 import boto3
 import os
 from boto3.dynamodb.conditions import Key, Attr
@@ -30,7 +30,7 @@ class DynamoClient:
 
         return result["Items"]
 
-    def post_item(self, body: PropertyServiceItem, args={}):
+    def post_item(self, body: DataItem, args={}):
         try:
             self.PROPERTYSERVICE_TABLE.put_item(Item=body, **args)
         except ClientError as e:
@@ -49,7 +49,7 @@ class DynamoClient:
 
         try:
             response = self.PROPERTYSERVICE_TABLE.update_item(
-                Key={"itemId": item_id, "dataSelector": data_selector},
+                Key={"itemID": item_id, "dataSelector": data_selector},
                 UpdateExpression=update_expression,
                 ExpressionAttributeValues=expression_values,
                 ReturnValues="ALL_NEW",
@@ -66,7 +66,7 @@ class DynamoClient:
         try:
             response = self.PROPERTYSERVICE_TABLE.delete_item(
                 Key={
-                    "itemId": item_id,
+                    "itemID": item_id,
                     "dataSelector": data_selector,
                 },
                 ReturnValues="ALL_OLD",

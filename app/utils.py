@@ -48,9 +48,11 @@ def validate_property_id(id):
     result = re.match(r"^\w{10}#\w{10}$", id)
     return result != None
 
+
 def validate_review_key(key):
     result = re.match(r"^REV#\w{10}$", key)
     return result != None
+
 
 def get_metadata_key_from_item_id(id):
     key_hashes = id.split("#")
@@ -69,16 +71,16 @@ def generate_property_key_hash(hash_value, key="PROPERTY"):
 
 
 def generate_property_keys(postcode_hash, street_name_hash=None):
-    key_map = {"itemId": "", "dataSelector": "", "reviewIndexPK": ""}
+    key_map = {"itemID": "", "dataSelector": "", "reviewIndexPK": ""}
 
-    key_map["itemId"] = generate_property_key_hash(postcode_hash)
+    key_map["itemID"] = generate_property_key_hash(postcode_hash)
 
     if street_name_hash:
         key_map["dataSelector"] = generate_property_key_hash(
             street_name_hash, "METADATA"
         )
         key_map["reviewIndexPK"] = "{}#{}".format(
-            key_map["itemId"], key_map["dataSelector"]
+            key_map["itemID"], key_map["dataSelector"]
         )
 
     return key_map
