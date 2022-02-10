@@ -25,15 +25,27 @@ jobs:
         docker pull amazon/dynamodb-local
         docker run --name test-db -p 8000:8000 -d amazon/dynamodb-local
 
-    - name: Integration Tests
+    - name: Property Integration Tests
       env:
+        REVLET_ENV: property-local
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: eu-west-2
       run: |
         export PYTHONPATH="$PYTHONPATH:$(pwd)/app"
         pip3 install -r requirements.tests.txt 
-        pytest tests/integration
+        pytest tests/integration/test_property_client.py
+
+    - name: Review Integration Tests
+      env:
+        REVLET_ENV: review-local
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: eu-west-2
+      run: |
+        export PYTHONPATH="$PYTHONPATH:$(pwd)/app"
+        pip3 install -r requirements.tests.txt 
+        pytest tests/integration/test_review_client.py
 
     # Tear down docker image
     - name: Tear Down Docker Image

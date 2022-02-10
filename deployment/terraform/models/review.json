@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    },
+    "tenancyStartDate": {
+      "type": "string"
+    },
+    "tenancyEndDate": {
+      "type": "string"
+    },
+    "facilities": {
+      "type": "number"
+    },
+    "location": {
+      "type": "number"
+    },
+    "management": {
+      "type": "number"
+    },
+    "vfm": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "title",
+    "location",
+    "management",
+    "facilities",
+    "tenancyStartDate",
+    "tenancyEndDate"
+  ],
+  "title": "Review"
+}

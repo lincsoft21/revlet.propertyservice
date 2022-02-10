@@ -1,25 +1,31 @@
 locals {
+  resources = ["properties", "reviews"]
+  models    = ["property", "review", "PropertyDetails"]
   function_method_map = {
     get_properties = {
       method     = "GET"
+      resource   = "properties"
       model      = null
       validator  = null
       authorizer = null
       params = {
         "method" = {
-          "method.request.querystring.p" = false
+          "method.request.querystring.p"  = false
+          "method.request.querystring.id" = false
         },
         "template" = {
           "application/json" = jsonencode({
-            "p" = "$input.params('p')"
+            "p"  = "$input.params('p')",
+            "id" = "$input.params('id')"
           })
         }
       }
     }
     post_property = {
-      method = "POST"
+      method   = "POST"
+      resource = "properties"
       model = {
-        "application/json" = aws_api_gateway_model.propertyservice_model.name
+        "application/json" = aws_api_gateway_model.propertyservice_models["property"].name
       }
       validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
@@ -29,39 +35,92 @@ locals {
       }
     }
     update_property_details = {
-      method = "PUT"
+      method   = "PUT"
+      resource = "properties"
       model = {
-        "application/json" = aws_api_gateway_model.propertyservice_details_model.name
+        "application/json" = aws_api_gateway_model.propertyservice_models["PropertyDetails"].name
       }
       validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
       params = {
         "method" = {
-          "method.request.querystring.p" = false
-          "method.request.querystring.s" = false
+          "method.request.querystring.id" = false
         },
         "template" = {
           "application/json" = jsonencode({
-            "p" = "$input.params('p')"
-            "s" = "$input.params('s')"
+            "id" = "$input.params('id')"
           })
         }
       }
     }
     delete_property = {
       method     = "DELETE"
+      resource   = "properties"
       model      = null
       validator  = null
       authorizer = aws_api_gateway_authorizer.propertyservice_api_admin_authorizer.id
       params = {
         "method" = {
-          "method.request.querystring.p" = true
-          "method.request.querystring.s" = true
+          "method.request.querystring.id" = true
         },
         "template" = {
           "application/json" = jsonencode({
-            "p" = "$input.params('p')"
-            "s" = "$input.params('s')"
+            "id" = "$input.params('id')"
+          })
+        }
+      }
+    }
+    get_reviews = {
+      method     = "GET"
+      resource   = "reviews"
+      model      = null
+      validator  = null
+      authorizer = null
+      params = {
+        "method" = {
+          "method.request.querystring.id" = true
+        },
+        "template" = {
+          "application/json" = jsonencode({
+            "id" = "$input.params('id')"
+          })
+        }
+      }
+    }
+    post_review = {
+      method   = "POST"
+      resource = "reviews"
+      model = {
+        "application/json" = aws_api_gateway_model.propertyservice_models["review"].name
+      }
+      validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
+      authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
+      params = {
+        "method" = {
+          "method.request.querystring.id" = true
+        },
+        "template" = {
+          "application/json" = jsonencode({
+            "id" = "$input.params('id')"
+          })
+        }
+      }
+    }
+    delete_review = {
+      method     = "DELETE"
+      resource   = "reviews"
+      model      = null
+      validator  = aws_api_gateway_request_validator.propertyservice_model_validator.id
+      authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
+      params = {
+        "method" = {
+          "method.request.querystring.id" = true
+          "method.request.querystring.r"  = true
+        },
+        "template" = {
+          "application/json" = jsonencode({
+            "id" = "$input.params('id')",
+            "r"  = "$input.params('r')"
           })
         }
       }
@@ -74,7 +133,8 @@ resource "aws_api_gateway_rest_api" "propertyservice_api" {
 }
 
 resource "aws_api_gateway_resource" "propertyservice_gateway_properties_resource" {
-  path_part   = "properties"
+  for_each    = toset(local.resources)
+  path_part   = each.value
   parent_id   = aws_api_gateway_rest_api.propertyservice_api.root_resource_id
   rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id
 }
@@ -82,7 +142,7 @@ resource "aws_api_gateway_resource" "propertyservice_gateway_properties_resource
 resource "aws_api_gateway_method" "propertyservice_method" {
   for_each         = local.function_method_map
   rest_api_id      = aws_api_gateway_rest_api.propertyservice_api.id
-  resource_id      = aws_api_gateway_resource.propertyservice_gateway_properties_resource.id
+  resource_id      = aws_api_gateway_resource.propertyservice_gateway_properties_resource[each.value.resource].id
   http_method      = each.value.method
   api_key_required = true
 
@@ -97,7 +157,7 @@ resource "aws_api_gateway_method" "propertyservice_method" {
 resource "aws_api_gateway_integration" "propertyservice_lambda_integration" {
   for_each                = local.function_method_map
   rest_api_id             = aws_api_gateway_rest_api.propertyservice_api.id
-  resource_id             = aws_api_gateway_resource.propertyservice_gateway_properties_resource.id
+  resource_id             = aws_api_gateway_resource.propertyservice_gateway_properties_resource[each.value.resource].id
   http_method             = aws_api_gateway_method.propertyservice_method[each.key].http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
@@ -115,7 +175,7 @@ resource "aws_lambda_permission" "propertyservice_lambda_permission" {
   principal     = "apigateway.amazonaws.com"
 
   # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
-  source_arn = format("arn:aws:execute-api:%s:%s:%s/*/%s%s", local.region, data.aws_caller_identity.this.account_id, aws_api_gateway_rest_api.propertyservice_api.id, aws_api_gateway_method.propertyservice_method[each.key].http_method, aws_api_gateway_resource.propertyservice_gateway_properties_resource.path)
+  source_arn = format("arn:aws:execute-api:%s:%s:%s/*/%s%s", local.region, data.aws_caller_identity.this.account_id, aws_api_gateway_rest_api.propertyservice_api.id, aws_api_gateway_method.propertyservice_method[each.key].http_method, aws_api_gateway_resource.propertyservice_gateway_properties_resource[each.value.resource].path)
 }
 
 
@@ -126,20 +186,13 @@ resource "aws_api_gateway_request_validator" "propertyservice_model_validator" {
   validate_request_parameters = false
 }
 
-resource "aws_api_gateway_model" "propertyservice_model" {
+
+resource "aws_api_gateway_model" "propertyservice_models" {
+  for_each     = toset(local.models)
   rest_api_id  = aws_api_gateway_rest_api.propertyservice_api.id
-  name         = "Property"
-  description  = "Property API Input Model"
+  name         = each.value
+  description  = format("%s model", each.value)
   content_type = "application/json"
 
-  schema = file("${path.module}/models/property.json")
-}
-
-resource "aws_api_gateway_model" "propertyservice_details_model" {
-  rest_api_id  = aws_api_gateway_rest_api.propertyservice_api.id
-  name         = "PropertyDetails"
-  description  = "Property API Details Model"
-  content_type = "application/json"
-
-  schema = file("${path.module}/models/property_details.json")
+  schema = file("${path.module}/models/${each.value}.json")
 }

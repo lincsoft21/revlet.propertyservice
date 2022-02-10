@@ -1,22 +1,23 @@
-from uuid import UUID
 import hashlib
 import re
+import uuid
 
 
-def validate_property_id(propertyId: str):
-    try:
-        test_uuid = UUID(propertyId, version=4)
-    except ValueError:
+def validate_query_params(param, event):
+    if not "queryStringParameters" in event:
         return False
-    return str(test_uuid) == propertyId
+
+    if not param in event["queryStringParameters"]:
+        return False
+
+    return True
 
 
-def validate_query_params(params):
-    pass
-
-
+# Validate postcode follows UK postcode format
 def validate_property_postcode(postcode: str):
-    pass
+    return (
+        re.match(r"^([a-zA-Z]{1,2}[a-zA-Z\d]{1,2})\s(\d[a-zA-Z]{2})$", postcode)
+    ) != None
 
 
 def get_lambda_response(status=200, data="", headers={}, isBase64=False):
@@ -28,19 +29,80 @@ def get_lambda_response(status=200, data="", headers={}, isBase64=False):
     }
 
 
-def clean_identifier(identifier):
+# Remove spaces and special characters from street names
+def clean_input(identifier):
     clean_value = re.sub(r"\W+", "", identifier)
-    return clean_value.strip().replace(" ", "").lower()
+    return clean_value.strip().replace(" ", "-")
 
 
-def generate_property_key(key_value, type="postcode", hash_input=True):
-    clean_value = clean_identifier(key_value)
+def get_key_hash(key):
+    return hashlib.shake_256(key.encode()).hexdigest(5)
 
-    hash_value = key_value
-    if hash_input:
-        hash_value = hashlib.shake_256(clean_value.encode()).hexdigest(5)
 
-    if type == "selector":
-        return "METADATA#{}".format(hash_value)
-    else:
-        return "PROPERTY#{}".format(hash_value)
+def validate_hash(key):
+    result = re.match(r"^\w{10}$", key)
+    return result != None
+
+
+def validate_property_id(id):
+    result = re.match(r"^\w{10}#\w{10}$", id)
+    return result != None
+
+
+def validate_review_key(key):
+    result = re.match(r"^REV#\w{10}$", key)
+    return result != None
+
+
+def get_metadata_key_from_item_id(id):
+    key_hashes = id.split("#")
+    return "META#{}".format(key_hashes[1])
+
+
+def generate_property_key_hash(hash_value, key="PROPERTY"):
+    if not validate_hash(hash_value):
+        raise Exception("Invalid hash value")
+
+    clean_value = clean_input(hash_value)
+    if not key in ["PROPERTY", "METADATA", "REVIEW"]:
+        raise Exception({"message": "Invalid key type"})
+
+    return "{}#{}".format(key.upper(), clean_value)
+
+
+def generate_property_keys(postcode_hash, street_name_hash=None):
+    key_map = {"itemID": "", "dataSelector": "", "reviewIndexPK": ""}
+
+    key_map["itemID"] = generate_property_key_hash(postcode_hash)
+
+    if street_name_hash:
+        key_map["dataSelector"] = generate_property_key_hash(
+            street_name_hash, "METADATA"
+        )
+        key_map["reviewIndexPK"] = "{}#{}".format(
+            key_map["itemID"], key_map["dataSelector"]
+        )
+
+    return key_map
+
+
+def generate_review_key(id=None):
+    if id == None:
+        new_uuid = (uuid.uuid4()).hex
+        id = get_key_hash(new_uuid)
+    return "REVIEW#{}".format(str(id))
+
+
+def validate_id(id, id_type=None):
+    result = None
+    # Confirm that the ID is 10 bytes long
+    if id_type == None:
+        result = re.match(r"^\w{10}$", id)
+        return result != None
+
+    if id_type.upper() not in ["REVIEW", "PROPERTY", "METADATA"]:
+        return False
+
+    # Given an ID type, validate
+    regex_string = r"^" + id_type.upper() + r"#\w{10}$"
+    return (re.match(regex_string, id)) != None
