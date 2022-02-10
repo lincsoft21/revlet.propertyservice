@@ -7,9 +7,6 @@
     "streetName": {
       "type": "string"
     },
-    "county": {
-      "type": "string"
-    },
     "rooms": {
       "type": "number"
     },

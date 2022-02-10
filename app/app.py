@@ -22,10 +22,12 @@ def get_properties(event, context):
         return _propertyhandler.get_properties_by_postcode(
             event["queryStringParameters"]["p"]
         )
-    elif utils.validate_query_params("id", event):
-        return _propertyhandler.get_property_by_id(event["queryStringParameters"]["id"])
 
-    return _responder.return_invalid_request_response("Missing property details")
+    return _responder.return_invalid_request_response("Missing postcode in request")
+
+
+def get_property_by_id(event, context):
+    return _propertyhandler.get_property_by_id(event["pathParameters"]["id"])
 
 
 def post_property(event, context):
@@ -36,45 +38,23 @@ def post_property(event, context):
 def update_property_details(event, context):
     data = json.loads(event["body"])
 
-    if not utils.validate_query_params("id", event):
-        return _responder.return_invalid_request_response("Request missing property ID")
-
-    return _propertyhandler.update_property_details(
-        event["queryStringParameters"]["id"], data
-    )
+    return _propertyhandler.update_property_details(event["pathParameters"]["id"], data)
 
 
 def delete_property(event, context):
-    if not utils.validate_query_params("id", event):
-        return _responder.return_invalid_request_response("Request missing property ID")
-
-    return _propertyhandler.delete_property(event["queryStringParameters"]["id"])
+    return _propertyhandler.delete_property(event["pathParameters"]["id"])
 
 
 def get_reviews(event, context):
-    # Given a valid property details, get all reviews associated
-    if not utils.validate_query_params("id", event):
-        return _responder.return_invalid_request_response("Request missing property ID")
-
-    return _reviewhandler.get_reviews(event["queryStringParameters"]["id"])
+    return _reviewhandler.get_reviews(event["pathParameters"]["id"])
 
 
 def post_review(event, context):
-    if not utils.validate_query_params("id", event):
-        return _responder.return_invalid_request_response("Request missing property ID")
-
     data = json.loads(event["body"])
-    return _reviewhandler.post_review(event["queryStringParameters"]["id"], data)
+    return _reviewhandler.post_review(event["pathParameters"]["id"], data)
 
 
 def delete_review(event, context):
-    if not utils.validate_query_params("id", event) or not utils.validate_query_params(
-        "r", event
-    ):
-        return _responder.return_invalid_request_response(
-            "Request missing property details"
-        )
-
     return _reviewhandler.delete_review(
-        event["queryStringParameters"]["id"], event["queryStringParameters"]["r"]
+        event["pathParameters"]["id"], event["pathParameters"]["reviewId"]
     )

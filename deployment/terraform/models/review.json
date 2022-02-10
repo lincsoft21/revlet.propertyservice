@@ -24,9 +24,6 @@
     },
     "management": {
       "type": "number"
-    },
-    "vfm": {
-      "type": "number"
     }
   },
   "required": [

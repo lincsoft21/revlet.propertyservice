@@ -50,4 +50,7 @@ class Review:
             print(f"Failed to convert dates: {e}")
             return False
 
+        if te_date > date.today():
+            return False
+
         return te_date > ts_date
