@@ -6,3 +6,4 @@ from datetime import date
 class DataItem:
     itemID: str
     dataSelector: str
+    creator: str

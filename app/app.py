@@ -1,3 +1,4 @@
+from middleware.request_validation import RequestValidator
 from responders.lambda_responder import LambdaResponder
 from data.dynamo_client import DynamoClient
 from handlers.review_client import RevletReviewService
@@ -12,6 +13,8 @@ PROPERTIES_TABLE = "revlet-propertyservice-{}-db".format(
 
 _responder = LambdaResponder()
 _dbclient = DynamoClient(PROPERTIES_TABLE)
+
+_requestValidator = RequestValidator()
 
 _propertyhandler = RevletPropertyService(_dbclient, _responder)
 _reviewhandler = RevletReviewService(_dbclient, _responder)
@@ -32,16 +35,43 @@ def get_property_by_id(event, context):
 
 def post_property(event, context):
     data = json.loads(event["body"])
-    return _propertyhandler.post_property(data)
+
+    # Run Middleware
+    user = _requestValidator.validate_authenticated_user(context)
+    if not user:
+        return _responder.return_unauthenticated_response()
+
+    new_property = _requestValidator.validate_property_request(data, user)
+    if not new_property:
+        return _responder.return_invalid_request_response("Invalid property model")
+
+    return _propertyhandler.post_property(new_property)
 
 
 def update_property_details(event, context):
     data = json.loads(event["body"])
 
-    return _propertyhandler.update_property_details(event["pathParameters"]["id"], data)
+    # Validate user, property ID
+    if not _requestValidator.validate_property_id(event["pathParameters"]["id"]):
+        return _responder.return_invalid_request_response("Invalid property ID")
+
+    updater = _requestValidator.validate_authenticated_user(context)
+    if not updater:
+        return _responder.return_unauthenticated_response()
+
+    updated_property = _requestValidator.validate_property_update_request(
+        event["pathParameters"]["id"], data, updater
+    )
+    if not updated_property:
+        return _responder.return_invalid_request_response("Invalid property request")
+
+    return _propertyhandler.update_property_details(updated_property)
 
 
 def delete_property(event, context):
+    if not _requestValidator.validate_property_id(event["pathParameters"]["id"]):
+        return _responder.return_invalid_request_response("Invalid property ID")
+
     return _propertyhandler.delete_property(event["pathParameters"]["id"])
 
 
@@ -50,11 +80,27 @@ def get_reviews(event, context):
 
 
 def post_review(event, context):
+    if not _requestValidator.validate_property_id(event["pathParameters"]["id"]):
+        return _responder.return_invalid_request_response("Invalid property ID")
+
+    author = _requestValidator.validate_authenticated_user(context)
+    if not author:
+        return _responder.return_unauthenticated_response()
+
     data = json.loads(event["body"])
-    return _reviewhandler.post_review(event["pathParameters"]["id"], data)
+    new_review = _requestValidator.validate_review_request(data, author)
+    if not new_review:
+        return _responder.return_invalid_request_response("Invalid review model")
+
+    return _reviewhandler.post_review(new_review)
 
 
 def delete_review(event, context):
+    if not _requestValidator.validate_property_id(
+        event["pathParameters"]["id"]
+    ) or not _requestValidator.validate_review_key(event["pathParameters"]["reviewId"]):
+        return _responder.return_invalid_request_response("Invalid property ID")
+
     return _reviewhandler.delete_review(
         event["pathParameters"]["id"], event["pathParameters"]["reviewId"]
     )

@@ -1,4 +1,5 @@
-from models.review import Review, ReviewModel
+from models.property import Property, PropertyModel
+from models.review import ReviewRequestModel, Review, ReviewModel
 from responders.lambda_responder import LambdaResponder
 from handlers.property_client import RevletPropertyService
 from data.dynamo_client import DynamoClient
@@ -31,29 +32,35 @@ class RevletReviewService:
 
         return self._responder.return_success_response(response)
 
-    def post_review(self, property_id, body):
-        if not utils.validate_property_id(property_id):
-            return self._responder.return_invalid_request_response(
-                "Invalid property ID"
-            )
-
+    def post_review(self, review: ReviewRequestModel):
         try:
-            new_review = Review(property_id, **body)
+            new_review = Review(review)
             if not new_review.validate_item():
                 return self._responder.return_invalid_request_response("Invalid review")
 
-            response = self._propertyclient.update_property_ratings(
-                property_id, new_review.review
+            review_property_response = self._propertyclient.get_property_by_id(
+                review.itemID
             )
-            if response["statusCode"] != 200:
-                return response
+            if review_property_response["statusCode"] != 200:
+                return review_property_response
 
             post_review_args = {
                 "ConditionExpression": "attribute_not_exists(dataSelector)"
             }
-
-            # Create new review in database
+            print(new_review.review)
+            # Create new review in database before updating property
             self._dbclient.post_item(new_review.response_object(), post_review_args)
+
+            # Parse to PropertyModel and update property ratings
+            review_property = PropertyModel(
+                **json.loads(review_property_response["body"])
+            )
+            new_review.update_property_ratings(review_property)
+            property_update_response = self._propertyclient.update_property_ratings(
+                review_property
+            )
+            if property_update_response["statusCode"] != 200:
+                return property_update_response
 
         except ValueError as v:
             return self._responder.return_invalid_request_response(str(v))
@@ -65,20 +72,32 @@ class RevletReviewService:
         )
 
     def delete_review(self, property_id, review_key):
-        if not utils.validate_review_key(review_key):
-            return self._responder.return_invalid_request_response("Invalid review key")
-
-        args = {"ConditionExpression": "attribute_exists(dataSelector)"}
+        args = {
+            "ConditionExpression": "attribute_exists(itemID) and attribute_exists(dataSelector)"
+        }
         try:
+            review_property_response = self._propertyclient.get_property_by_id(
+                property_id
+            )
+            if review_property_response["statusCode"] != 200:
+                return review_property_response
+
             delete_response = self._dbclient.delete_item(property_id, review_key, args)
 
             # Update property to remove ratings
-            delete_review = ReviewModel(**delete_response)
+            delete_review = Review(delete_response)
+            delete_review_property = PropertyModel(
+                **json.loads(review_property_response["body"])
+            )
+            updated_review_property = delete_review.update_property_ratings(
+                delete_review_property, operator.sub
+            )
+
             response = self._propertyclient.update_property_ratings(
-                property_id, delete_review, operator.sub
+                updated_review_property
             )
             if response["statusCode"] != 200:
-                raise Exception("Failed to update property ratings")
+                return response
         except ValueError as v:
             return self._responder.return_invalid_request_response(str(v))
         except Exception as e:

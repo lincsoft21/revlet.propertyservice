@@ -1,5 +1,5 @@
 import json
-from models.property import PropertyModel, Property
+from models.property import PropertyModel, Property, PropertyRequestModel
 from models.review import ReviewModel
 import boto3
 from utils import generate_property_keys, get_key_hash, clean_input
@@ -44,12 +44,9 @@ def get_invalid_test_hash():
 
 def get_test_property(
     table: "boto3.resources.factory.dynamodb.Table",
-    test_property_postcode: str,
-    test_property_street_name: str,
+    property_request: PropertyRequestModel,
 ):
-    get_property = Property(
-        test_property_postcode, test_property_street_name
-    )
+    get_property = Property(property_request)
 
     test_result = table.get_item(
         Key={

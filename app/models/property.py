@@ -3,7 +3,6 @@ from pickletools import float8
 from utils import clean_input, get_key_hash
 import re
 from models.data_item import DataItem
-from models.review import ReviewModel
 import math
 import operator
 from datetime import date
@@ -15,6 +14,7 @@ from pydantic import validate_arguments
 class PropertyModel(DataItem):
     postcode: str
     streetName: str
+    creator: str
 
     rooms: int = 0
     garden: bool = False
@@ -26,6 +26,7 @@ class PropertyModel(DataItem):
     facilitiesRating: float = 0
     reviewCount: int = 0
 
+    lastUpdatedBy: str = ""
     dateCreated: str = str(date.today())
 
 
@@ -33,24 +34,45 @@ class PropertyModel(DataItem):
 class PropertyRequestModel:
     postcode: str
     streetName: str
+    creator: str
 
     rooms: int = 0
     garden: bool = False
     parking: bool = False
 
 
-class Property:
-    def __init__(self, postcode, streetName, **details):
-        details["itemID"] = details.get(
-            "itemID", self.get_item_id(postcode, streetName)
-        )
-        details["dataSelector"] = details.get(
-            "dataSelector", self.get_data_selector(streetName)
-        )
+@dataclass
+class PropertyUpdateModel:
+    itemID: str
+    rooms: int
+    garden: bool
+    parking: bool
+    lastUpdatedBy: str
 
-        self.property = PropertyModel(
-            postcode=postcode, streetName=streetName, **details
-        )
+
+class Property:
+    def __init__(self, property_input):
+        if type(property_input) is PropertyRequestModel:
+            item_id = self.get_item_id(
+                property_input.postcode, property_input.streetName
+            )
+            data_selector = self.get_data_selector(property_input.streetName)
+
+            self.property = PropertyModel(
+                itemID=item_id, dataSelector=data_selector, **asdict(property_input)
+            )
+        else:
+            property_input["itemID"] = property_input.get(
+                "itemID",
+                self.get_item_id(
+                    property_input["postcode"], property_input["streetName"]
+                ),
+            )
+            property_input["dataSelector"] = property_input.get(
+                "dataSelector", self.get_data_selector(property_input["postcode"])
+            )
+
+            self.property = PropertyModel(**property_input)
 
     def get_item_id(self, postcode, street_name):
         clean_postcode = clean_input(postcode)
@@ -84,35 +106,35 @@ class Property:
         ) != None
 
     ## PROPERTY RATINGS
-    def update_property_ratings(
-        self, review: ReviewModel, update_function=operator.add
-    ):
-        self.property.locationRating = self.update_rating(
-            self.property.locationRating, review.location, update_function
-        )
-        self.property.managementRating = self.update_rating(
-            self.property.managementRating, review.management, update_function
-        )
-        self.property.facilitiesRating = self.update_rating(
-            self.property.facilitiesRating, review.facilities, update_function
-        )
+    # def update_property_ratings(
+    #     self, review: ReviewModel, update_function=operator.add
+    # ):
+    #     self.property.locationRating = self.update_rating(
+    #         self.property.locationRating, review.location, update_function
+    #     )
+    #     self.property.managementRating = self.update_rating(
+    #         self.property.managementRating, review.management, update_function
+    #     )
+    #     self.property.facilitiesRating = self.update_rating(
+    #         self.property.facilitiesRating, review.facilities, update_function
+    #     )
 
-        # Increase or decrease review count
-        self.property.reviewCount = update_function(self.property.reviewCount, 1)
+    #     # Increase or decrease review count
+    #     self.property.reviewCount = update_function(self.property.reviewCount, 1)
 
-        self.property.overallRating = (
-            self.property.locationRating
-            + self.property.managementRating
-            + self.property.facilitiesRating
-        ) / 3
+    #     self.property.overallRating = (
+    #         self.property.locationRating
+    #         + self.property.managementRating
+    #         + self.property.facilitiesRating
+    #     ) / 3
 
-    def update_rating(self, current_rating: int, updated_rating: int, update_function):
-        if update_function(self.property.reviewCount, 1) <= 0:
-            return 0
+    # def update_rating(self, current_rating: int, updated_rating: int, update_function):
+    #     if update_function(self.property.reviewCount, 1) <= 0:
+    #         return 0
 
-        current_total = current_rating * self.property.reviewCount
-        average = update_function(current_total, updated_rating) / update_function(
-            self.property.reviewCount, 1
-        )
+    #     current_total = current_rating * self.property.reviewCount
+    #     average = update_function(current_total, updated_rating) / update_function(
+    #         self.property.reviewCount, 1
+    #     )
 
-        return average
+    #     return average

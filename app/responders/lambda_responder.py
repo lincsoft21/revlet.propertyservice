@@ -27,3 +27,6 @@ class LambdaResponder:
 
     def return_invalid_request_response(self, error):
         return asdict(LambdaResponse(error, 400))
+
+    def return_unauthenticated_response(self):
+        return asdict(LambdaResponse("User not authenticated", 403))
