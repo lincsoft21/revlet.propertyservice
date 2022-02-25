@@ -6,9 +6,9 @@ import re
 
 class RequestValidator:
     def get_authenticated_user(self, event):
-        if "authorizer" in event["requestContext"]:
-            if "user" in event["requestContext"]["authorizer"]:
-                return event["requestContext"]["authorizer"]["user"]
+        if "identity" in event["requestContext"]:
+            if "user" in event["requestContext"]["identity"]:
+                return event["requestContext"]["identity"]["user"]
 
         return None
 
