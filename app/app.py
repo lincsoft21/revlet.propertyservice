@@ -38,7 +38,6 @@ def post_property(event, context):
 
     # Get authenticated user ID
     user = event["requestContext"]["authorizer"]["claims"]["sub"]
-
     new_property = _requestValidator.validate_property_request(data, user)
     if not new_property:
         return _responder.return_invalid_request_response("Invalid property model")
@@ -53,12 +52,11 @@ def update_property_details(event, context):
     if not _requestValidator.validate_property_id(event["pathParameters"]["id"]):
         return _responder.return_invalid_request_response("Invalid property ID")
 
-    updater = _requestValidator.get_authenticated_user(event)
-    if not updater:
-        return _responder.return_unauthenticated_response()
+    # Get authenticated user ID
+    user = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     updated_property = _requestValidator.validate_property_update_request(
-        event["pathParameters"]["id"], data, updater
+        event["pathParameters"]["id"], data, user
     )
     if not updated_property:
         return _responder.return_invalid_request_response("Invalid property request")
@@ -81,12 +79,11 @@ def post_review(event, context):
     if not _requestValidator.validate_property_id(event["pathParameters"]["id"]):
         return _responder.return_invalid_request_response("Invalid property ID")
 
-    author = _requestValidator.get_authenticated_user(context)
-    if not author:
-        return _responder.return_unauthenticated_response()
+    # Get authenticated user ID
+    user = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     data = json.loads(event["body"])
-    new_review = _requestValidator.validate_review_request(data, author)
+    new_review = _requestValidator.validate_review_request(data, user)
     if not new_review:
         return _responder.return_invalid_request_response("Invalid review model")
 
