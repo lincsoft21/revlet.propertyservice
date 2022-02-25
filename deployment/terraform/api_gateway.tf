@@ -45,7 +45,13 @@ locals {
       authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
       params = {
         "method"   = null,
-        "template" = null
+        "template" = {
+          "application/json" = jsonencode({
+            "context" = {
+              "user" = "$context.authorizers.claims.sub"
+            }
+          })
+        }
       }
     }
     update_property_details = {

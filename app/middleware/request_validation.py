@@ -5,9 +5,9 @@ import re
 
 
 class RequestValidator:
-    def validate_authenticated_user(self, event, context):
-        if "claims" in event["requestContext"]["authorizer"]:
-            return event["requestContext"]["authorizer"]["claims"]
+    def validate_authenticated_user(self, context):
+        if "user" in context:
+            return context["user"]
 
         return None
 
