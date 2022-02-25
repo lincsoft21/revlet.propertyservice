@@ -72,7 +72,7 @@ locals {
       resource   = aws_api_gateway_resource.propertyservice_gateway_property_id_resource
       model      = null
       validator  = null
-      authorizer = aws_api_gateway_authorizer.propertyservice_api_admin_authorizer.id
+      authorizer = aws_api_gateway_authorizer.propertyservice_api_authorizer.id
       params = {
         "method" = {
           "method.request.path.id" = true
