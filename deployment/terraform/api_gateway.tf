@@ -235,3 +235,29 @@ resource "aws_api_gateway_model" "propertyservice_models" {
 
   schema = file("${path.module}/models/${each.value}.json")
 }
+
+resource "aws_api_gateway_deployment" "propertyservice_api_deployment" {
+  rest_api_id = aws_api_gateway_rest_api.propertyservice_api.id
+
+  triggers = {
+    redeployment = sha1(jsonencode(concat(
+      values(aws_api_gateway_method.propertyservice_method)[*].id, 
+      values(aws_api_gateway_integration.propertyservice_lambda_integration)[*].id,
+      [
+        aws_api_gateway_resource.propertyservice_gateway_properties_resource.id,
+        aws_api_gateway_resource.propertyservice_gateway_property_id_resource.id,
+        aws_api_gateway_resource.propertyservice_gateway_reviews_resource.id,
+        aws_api_gateway_resource.propertyservice_gateway_review_id_resource.id
+      ])))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_stage" "propertyservice_api_stage" {
+  deployment_id = aws_api_gateway_deployment.propertyservice_api_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.propertyservice_api.id
+  stage_name    = var.ENVIRONMENT
+}
