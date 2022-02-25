@@ -36,10 +36,8 @@ def get_property_by_id(event, context):
 def post_property(event, context):
     data = json.loads(event["body"])
 
-    # Run Middleware
-    user = _requestValidator.get_authenticated_user(event)
-    if not user:
-        return _responder.return_unauthenticated_response()
+    # Get authenticated user ID
+    user = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     new_property = _requestValidator.validate_property_request(data, user)
     if not new_property:
