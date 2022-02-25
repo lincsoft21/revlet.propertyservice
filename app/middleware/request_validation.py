@@ -5,9 +5,9 @@ import re
 
 
 class RequestValidator:
-    def validate_authenticated_user(self, context):
-        if "cognito_identity_id" in context["identity"]:
-            return context["identity"]["cognito_identity_id"]
+    def validate_authenticated_user(self, event, context):
+        if "claims" in event["requestContext"]["authorizer"]:
+            return event["requestContext"]["authorizer"]["claims"]
 
         return None
 
