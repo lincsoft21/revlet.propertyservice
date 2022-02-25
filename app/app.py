@@ -36,16 +36,18 @@ def get_property_by_id(event, context):
 def post_property(event, context):
     data = json.loads(event["body"])
 
+    return _responder.return_success_response(event)
+
     # Run Middleware
-    user = _requestValidator.get_authenticated_user(event)
-    if not user:
-        return _responder.return_unauthenticated_response()
+    # user = _requestValidator.get_authenticated_user(event)
+    # if not user:
+    #     return _responder.return_unauthenticated_response()
 
-    new_property = _requestValidator.validate_property_request(data, user)
-    if not new_property:
-        return _responder.return_invalid_request_response("Invalid property model")
+    # new_property = _requestValidator.validate_property_request(data, user)
+    # if not new_property:
+    #     return _responder.return_invalid_request_response("Invalid property model")
 
-    return _propertyhandler.post_property(new_property)
+    # return _propertyhandler.post_property(new_property)
 
 
 def update_property_details(event, context):

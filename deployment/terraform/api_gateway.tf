@@ -183,7 +183,7 @@ resource "aws_api_gateway_method" "propertyservice_method" {
   rest_api_id      = aws_api_gateway_rest_api.propertyservice_api.id
   resource_id      = each.value.resource.id
   http_method      = each.value.method
-  api_key_required = true
+  api_key_required = false
 
   authorization = each.value.method == "GET" ? "NONE" : "COGNITO_USER_POOLS"
   authorizer_id = each.value.authorizer
