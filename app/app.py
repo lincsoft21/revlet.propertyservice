@@ -37,7 +37,7 @@ def post_property(event, context):
     data = json.loads(event["body"])
 
     # Run Middleware
-    user = _requestValidator.validate_authenticated_user(context)
+    user = _requestValidator.validate_authenticated_user(event)
     if not user:
         return _responder.return_unauthenticated_response()
 
@@ -55,7 +55,7 @@ def update_property_details(event, context):
     if not _requestValidator.validate_property_id(event["pathParameters"]["id"]):
         return _responder.return_invalid_request_response("Invalid property ID")
 
-    updater = _requestValidator.validate_authenticated_user(context)
+    updater = _requestValidator.validate_authenticated_user(event)
     if not updater:
         return _responder.return_unauthenticated_response()
 
