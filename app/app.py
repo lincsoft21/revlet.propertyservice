@@ -21,7 +21,7 @@ _reviewhandler = RevletReviewService(_dbclient, _responder)
 
 
 def get_properties(event, context):
-    if utils.validate_query_params("p", event):
+    if _requestValidator.validate_query_params("p", event):
         return _propertyhandler.get_properties_by_postcode(
             event["queryStringParameters"]["p"]
         )

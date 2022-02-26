@@ -11,6 +11,15 @@ class RequestValidator:
                 return event["requestContext"]["identity"]["user"]
 
         return None
+    
+    def validate_query_params(param, event):
+        if not "queryStringParameters" in event:
+            return False
+
+        if not param in event["queryStringParameters"]:
+            return False
+
+        return True
 
     def validate_property_request(self, request_body, user):
         try:
