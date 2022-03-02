@@ -11,8 +11,8 @@ class RequestValidator:
                 return event["requestContext"]["identity"]["user"]
 
         return None
-    
-    def validate_query_params(param, event):
+
+    def validate_query_params(self, param, event):
         if not "queryStringParameters" in event:
             return False
 
@@ -49,10 +49,10 @@ class RequestValidator:
 
         return update_property
 
-    def validate_property_id(property_id):
+    def validate_property_id(self, property_id):
         result = re.match(r"^\w{10}#\w{10}$", property_id)
         return result != None
 
-    def validate_review_key(review_key):
+    def validate_review_key(self, review_key):
         result = re.match(r"^REV#\w{10}$", review_key)
         return result != None
