@@ -55,7 +55,7 @@ jobs:
 
   docker_publish:
     needs: 
-      - integration_tests
+      # - integration_tests
       - unit_tests
     runs-on: ubuntu-latest
     steps:
