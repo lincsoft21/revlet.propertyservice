@@ -15,8 +15,8 @@ class RevletPropertyService:
         self._responder = responder
 
     def get_properties_by_postcode(self, postcode_hash):
-        if not utils.validate_hash(postcode_hash):
-            return self._responder.return_invalid_request_response("Invalid postcode")
+        # if not utils.validate_hash(postcode_hash):
+        #     return self._responder.return_invalid_request_response("Invalid postcode")
 
         try:
             args = {

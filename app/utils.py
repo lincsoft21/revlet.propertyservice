@@ -36,9 +36,9 @@ def clean_input(identifier):
 
 
 def get_key_hash(key):
-    lower_key = key.lower()
+    updated = (key.lower()).replace(" ", "-")
     # Replace all spaces with #
-    return lower_key.replace(" ", "#")
+    return updated
     # return hashlib.shake_256(key.encode()).hexdigest(5)
 
 
