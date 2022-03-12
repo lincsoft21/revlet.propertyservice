@@ -22,9 +22,8 @@ _reviewhandler = RevletReviewService(_dbclient, _responder)
 
 def get_properties(event, context):
     if _requestValidator.validate_query_params("p", event):
-        return _propertyhandler.get_properties_by_postcode(
-            event["queryStringParameters"]["p"]
-        )
+        p_hash = utils.get_key_hash(event["quertyStringParameters"]["p"])
+        return _propertyhandler.get_properties_by_postcode(p_hash)
 
     return _responder.return_invalid_request_response("Missing postcode in request")
 

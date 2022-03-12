@@ -36,7 +36,10 @@ def clean_input(identifier):
 
 
 def get_key_hash(key):
-    return hashlib.shake_256(key.encode()).hexdigest(5)
+    lower_key = key.lower()
+    # Replace all spaces with #
+    return lower_key.replace(" ", "#")
+    # return hashlib.shake_256(key.encode()).hexdigest(5)
 
 
 def validate_hash(key):
