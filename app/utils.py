@@ -37,9 +37,8 @@ def clean_input(identifier):
 
 def get_key_hash(key):
     updated = (key.lower()).replace(" ", "-")
-    # Replace all spaces with #
-    return updated
-    # return hashlib.shake_256(key.encode()).hexdigest(5)
+    # Replace all spaces with - then hash
+    return hashlib.shake_256(updated.encode()).hexdigest(5)
 
 
 def validate_hash(key):
