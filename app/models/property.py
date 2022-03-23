@@ -75,17 +75,17 @@ class Property:
             self.property = PropertyModel(**property_input)
 
     def get_item_id(self, postcode, street_name):
-        clean_postcode = clean_input(postcode)
-        clean_street_name = clean_input(street_name)
+        # clean_postcode = clean_input(postcode)
+        # clean_street_name = clean_input(street_name)
 
-        postcode_hash = get_key_hash(clean_postcode.lower())
-        street_name_hash = get_key_hash(clean_street_name.lower())
+        postcode_hash = get_key_hash(postcode)
+        street_name_hash = get_key_hash(street_name)
 
         return "{}#{}".format(postcode_hash, street_name_hash)
 
     def get_data_selector(self, street_name):
-        clean_street_name = clean_input(street_name)
-        street_name_hash = get_key_hash(clean_street_name.lower())
+        # clean_street_name = clean_input(street_name)
+        street_name_hash = get_key_hash(street_name)
 
         return "META#{}".format(street_name_hash)
 

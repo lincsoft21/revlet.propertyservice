@@ -32,11 +32,11 @@ def get_lambda_response(status=200, data="", headers={}, isBase64=False):
 # Remove spaces and special characters from street names
 def clean_input(identifier):
     clean_value = re.sub(r"\W+", "", identifier)
-    return clean_value.strip().replace(" ", "_")
+    return clean_value
 
 
 def get_key_hash(key):
-    updated = (key.lower()).replace(" ", "_")
+    updated = clean_input(key.lower().replace(" ", "_"))
     # Replace all spaces with - then hash
     return hashlib.shake_256(updated.encode()).hexdigest(5)
 
