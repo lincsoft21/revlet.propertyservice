@@ -29,6 +29,9 @@ def get_properties(event, context):
 
 
 def get_property_by_id(event, context):
+    if not _requestValidator.validate_property_id(event["pathParameters"]["id"]):
+        return _responder.return_invalid_request_response("Invalid property ID")
+
     return _propertyhandler.get_property_by_id(event["pathParameters"]["id"])
 
 

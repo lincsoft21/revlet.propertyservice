@@ -30,12 +30,6 @@ class RevletPropertyService:
         return self._responder.return_success_response(response)
 
     def get_property_by_id(self, property_id):
-        # Validate property ID
-        if not utils.validate_property_id(property_id):
-            return self._responder.return_invalid_request_response(
-                "Invalid property ID"
-            )
-
         try:
             query = Key("itemID").eq(property_id) & Key("dataSelector").begins_with(
                 "META#"
