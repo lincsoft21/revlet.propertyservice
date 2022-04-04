@@ -21,7 +21,7 @@ class RevletPropertyService:
         try:
             args = {
                 "FilterExpression": Key("itemID").begins_with(postcode_hash)
-                & Key("dataSelector").begins_with("META#")
+                & Key("dataSelector").begins_with("META-")
             }
             response = self._dbclient.get_all_items(args)
         except Exception as e:
@@ -32,7 +32,7 @@ class RevletPropertyService:
     def get_property_by_id(self, property_id):
         try:
             query = Key("itemID").eq(property_id) & Key("dataSelector").begins_with(
-                "META#"
+                "META-"
             )
             response = self._dbclient.query_items(query)
         except Exception as e:

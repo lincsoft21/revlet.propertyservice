@@ -19,7 +19,7 @@ class RevletReviewService:
     def get_reviews(self, property_id):
         try:
             query = Key("itemID").eq(property_id) & Key("dataSelector").begins_with(
-                "REV#"
+                "REV-"
             )
             response = self._dbclient.query_items(query)
         except Exception as e:

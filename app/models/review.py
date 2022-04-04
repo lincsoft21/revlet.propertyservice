@@ -48,7 +48,7 @@ class Review:
         # Use user ID to generate review ID - limit users to 1 review per property
         key_value = get_key_hash(user)
 
-        id = "REV#{}".format(str(key_value))
+        id = "REV-{}".format(str(key_value))
         return id
 
     def response_object(self):

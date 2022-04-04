@@ -81,13 +81,13 @@ class Property:
         postcode_hash = get_key_hash(postcode)
         street_name_hash = get_key_hash(street_name)
 
-        return "{}#{}".format(postcode_hash, street_name_hash)
+        return "{}-{}".format(postcode_hash, street_name_hash)
 
     def get_data_selector(self, street_name):
         # clean_street_name = clean_input(street_name)
         street_name_hash = get_key_hash(street_name)
 
-        return "META#{}".format(street_name_hash)
+        return "META-{}".format(street_name_hash)
 
     # RESPONSE
     def response_object(self):
