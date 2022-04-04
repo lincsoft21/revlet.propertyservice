@@ -17,11 +17,6 @@ class RevletReviewService:
         self._responder = responder
 
     def get_reviews(self, property_id):
-        if not utils.validate_property_id(property_id):
-            return self._responder.return_invalid_request_response(
-                "Invalid property ID"
-            )
-
         try:
             query = Key("itemID").eq(property_id) & Key("dataSelector").begins_with(
                 "REV#"

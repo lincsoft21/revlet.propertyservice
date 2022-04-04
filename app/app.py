@@ -71,6 +71,9 @@ def delete_property(event, context):
 
 
 def get_reviews(event, context):
+    if not _requestValidator.validate_property_id(event["pathParameters"]["id"]):
+        return _responder.return_invalid_request_response("Invalid property ID")
+
     return _reviewhandler.get_reviews(event["pathParameters"]["id"])
 
 
