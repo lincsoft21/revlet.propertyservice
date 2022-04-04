@@ -50,7 +50,7 @@ class RequestValidator:
         return update_property
 
     def validate_property_id(self, property_id):
-        result = re.match(r"^\w{10}#\w{10}$", property_id)
+        result = re.match(r"^\w{10}(#|%23)\w{10}$", property_id)
         return result != None
 
     def validate_review_key(self, review_key):
