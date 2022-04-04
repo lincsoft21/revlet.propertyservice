@@ -54,5 +54,5 @@ class RequestValidator:
         return result != None
 
     def validate_review_key(self, review_key):
-        result = re.match(r"^REV#\w{10}$", review_key)
+        result = re.match(r"^REV(#|%23)\w{10}$", review_key)
         return result != None
