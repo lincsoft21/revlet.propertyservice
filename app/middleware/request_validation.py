@@ -30,9 +30,9 @@ class RequestValidator:
 
         return new_property
 
-    def validate_review_request(self, request_body, author):
+    def validate_review_request(self, property_id, request_body, author):
         try:
-            new_review = ReviewRequestModel(creator=author, **request_body)
+            new_review = ReviewRequestModel(creator=author, itemID=property_id, **request_body)
         except Exception as e:
             return None
 

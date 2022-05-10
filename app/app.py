@@ -88,8 +88,7 @@ def post_review(event, context):
     user = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     data = json.loads(event["body"])
-    data["itemID"] = event["pathParameters"]["id"]
-    new_review = _requestValidator.validate_review_request(data, user)
+    new_review = _requestValidator.validate_review_request(event["pathParameters"]["id"], data, user)
     if not new_review:
         return _responder.return_invalid_request_response("Invalid review model")
 

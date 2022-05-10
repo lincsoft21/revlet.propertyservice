@@ -10,23 +10,18 @@ class LambdaResponse:
 
 
 class LambdaResponder:
-    def return_success_response(self, body: str):
-        response_body = body
-
-        # If body is not a string, convert json body
-        if not type(body) == type(str):
-            response_body = json.dumps(body, default=str)
-
+    def return_success_response(self, body):
+        response_body = json.dumps(body, default=str)
         return asdict(LambdaResponse(response_body, 200))
 
-    def return_internal_server_error_response(self, error):
-        return asdict(LambdaResponse(error, 500))
+    def return_internal_server_error_response(self, error: str):
+        return asdict(LambdaResponse(json.dumps({"error": error}), 500))
 
-    def return_not_found_response(self, error):
-        return asdict(LambdaResponse(error, 404))
+    def return_not_found_response(self, error: str):
+        return asdict(LambdaResponse(json.dumps({"error": error}), 404))
 
-    def return_invalid_request_response(self, error):
-        return asdict(LambdaResponse(error, 400))
+    def return_invalid_request_response(self, error: str):
+        return asdict(LambdaResponse(json.dumps({"error": error}), 400))
 
     def return_unauthenticated_response(self):
-        return asdict(LambdaResponse("User not authenticated", 403))
+        return asdict(LambdaResponse(json.dumps({"error": "Unauthenticated"}), 403))

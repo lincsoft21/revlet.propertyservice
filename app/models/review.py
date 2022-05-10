@@ -12,7 +12,7 @@ class ReviewModel(DataItem):
     title: str
     tenancyStartDate: str
     tenancyEndDate: str
-    description: str = "No Descrpition"
+    description: str = "No Description"
     location: int = 0
     facilities: int = 0
     management: int = 0

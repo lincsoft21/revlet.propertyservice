@@ -57,9 +57,8 @@ class RevletPropertyService:
         except Exception as e:
             return self._responder.return_internal_server_error_response(str(e))
 
-        return self._responder.return_success_response(
-            "{} Created".format(new_property.property.itemID)
-        )
+        return self._responder.return_success_response({"itemID": new_property.property.itemID})
+
 
     def update_property_details(self, update_property: PropertyUpdateModel):
         args = {

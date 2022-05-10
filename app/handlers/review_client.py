@@ -63,7 +63,7 @@ class RevletReviewService:
             return self._responder.return_internal_server_error_response(str(e))
 
         return self._responder.return_success_response(
-            "{} Created".format(new_review.review.dataSelector)
+            {"itemID": new_review.review.dataSelector}
         )
 
     def delete_review(self, property_id, review_key):
